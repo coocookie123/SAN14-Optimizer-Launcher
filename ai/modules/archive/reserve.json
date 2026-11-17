@@ -1,0 +1,109 @@
+{
+  "id": "reserve",
+  "name": "攻城出兵时压低留守线（试验）",
+  "description": "用户定「压低一些」（2026-11-13）。原版攻城时每座出兵城扣到留守线（按方针 5000 / 6000 / 7000，树变量 $9f3e3992）就停，一次攻城的总兵数上限是出兵城数 ×（城里的兵 − 留守线），出兵编成怎么改都绕不过（第三十三节）。这里只在调用攻城出兵节点（任务 8–11 那组和任务 22 那个）之前把留守线乘 60%，调用完马上改回原值；军团树算「能出兵的城合计战力」、判断要不要出兵、打哪座城时用的仍是原值，攻城频率不变。只动电脑势力（出兵节点本来只给电脑用）。 原版父节点遇到失败会停，「改回」可能跑不到，所以每次用留守线算战力（[2015]、[2188]）之前也先改回，进区域分支设留守线时把记的值清零。",
+  "priority": 0,
+  "ops": [
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1956,
+        "type": "SEQ"
+      },
+      "src": [
+        "VariableCreateNode($m.reserve.keep, 0)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2015,
+        "type": "GetFootholdFightingStrengthNode"
+      },
+      "src": [
+        "IF $m.reserve.keep > 0",
+        "  SEQ(0, 2, 1)",
+        "    VariableCreateNode($9f3e3992, 0)",
+        "    VariablePlusVariableNode($9f3e3992, $m.reserve.keep)",
+        "    VariableCreateNode($m.reserve.keep, 0)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2188,
+        "type": "GetFootholdFightingStrengthNode"
+      },
+      "src": [
+        "IF $m.reserve.keep > 0",
+        "  SEQ(0, 2, 1)",
+        "    VariableCreateNode($9f3e3992, 0)",
+        "    VariablePlusVariableNode($9f3e3992, $m.reserve.keep)",
+        "    VariableCreateNode($m.reserve.keep, 0)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2098,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.reserve.keep, 0)",
+        "  VariablePlusVariableNode($m.reserve.keep, $9f3e3992)",
+        "  VariableMultiValueNode($9f3e3992, 60)",
+        "  VariableDivideValueNode($9f3e3992, 100)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 2098,
+        "type": "SEQ"
+      },
+      "src": [
+        "IF $m.reserve.keep > 0",
+        "  SEQ(0, 2, 1)",
+        "    VariableCreateNode($9f3e3992, 0)",
+        "    VariablePlusVariableNode($9f3e3992, $m.reserve.keep)",
+        "    VariableCreateNode($m.reserve.keep, 0)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2202,
+        "type": "CommandFootholdAttackDepatureNode"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.reserve.keep, 0)",
+        "  VariablePlusVariableNode($m.reserve.keep, $9f3e3992)",
+        "  VariableMultiValueNode($9f3e3992, 60)",
+        "  VariableDivideValueNode($9f3e3992, 100)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 2202,
+        "type": "CommandFootholdAttackDepatureNode"
+      },
+      "src": [
+        "IF $m.reserve.keep > 0",
+        "  SEQ(0, 2, 1)",
+        "    VariableCreateNode($9f3e3992, 0)",
+        "    VariablePlusVariableNode($9f3e3992, $m.reserve.keep)",
+        "    VariableCreateNode($m.reserve.keep, 0)"
+      ]
+    }
+  ]
+}

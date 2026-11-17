@@ -1,0 +1,93 @@
+{
+  "id": "siegeforce",
+  "name": "攻城凑兵算上邻城援军（试验）",
+  "description": "第一版（2026-11-13，用户：「攻城感觉派出的兵力不够，评估实力有问题，不仅要考虑攻击城市的兵力实力，还要考虑攻击城市的周边支援城市的实力，他们会支援，结果一支援要么撤退要么打不下来」）。数据（research/siege_relief.py，7 局）：约三分之一的攻城会有守方邻城的援军赶来，援军兵是攻方的 0.5–1.5 倍，从 17–38 格外的相邻城来；没援军时拿下 33%，有援军 24%；攻方出发时带的兵中位只和目标城守兵差不多。原版凑兵目标只算目标城（周边 10 格）的战力 × 2.6–3 加耐久。这个模块只在调用攻城出兵节点前（任务 8–11 那组和任务 22），把目标城相邻据点里同属守方的城能出的战力（扣 5000 留守，GetFootholdFightingStrengthNode）加进凑兵目标；同时往出兵城列表末尾追加稍远的自家城（原版对出兵城的条件照旧，路程从 12500 放宽到 20000，攻城出兵编成第二版的做法）。要不要出兵、打哪座城照原版。配合 reserve（出兵时留守线压到 60%）用：出兵常常是出兵城能出的兵用完才停，光提高目标不会多出兵。只动电脑势力。 2026-11-13 修正：之前用 GetFootholdFightingStrengthNode 求邻城战力，探针显示对守方城一次都没算出大于 0（206 年一年判断 2102 次、遍历邻城 10169 次，援军项都是 0），所以前面几局等于没加援军。改用城的兵力属性（36）：相邻据点里同属守方的城，（兵 − 5000）按到目标城的距离加权，12 格内 ×0.35、18 格内 ×0.2、30 格内 ×0.15（照「三国志14优化伴侣」的权重，按本项目数据援军多从 17–38 格外来，加了 30 格一档），合计封顶 45000。带计数探针（p_same、p_relief）。",
+  "priority": 0,
+  "ops": [
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2098,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.siegeforce.suma, 0)",
+        "  VariableGetFootholdInfoNode($ad8610fe, 3, $m.siegeforce.tfa)",
+        "  VariableGetFootholdInfoNode($ad8610fe, 26, $m.siegeforce.nba)",
+        "  LoopListElementNode(2, 10, $m.siegeforce.nba, $m.siegeforce.ca)",
+        "    VariableGetFootholdInfoNode($m.siegeforce.ca, 3, $m.siegeforce.cfa)",
+        "    VariableGetFootholdInfoNode($m.siegeforce.ca, 34, $m.siegeforce.moneya)",
+        "    IF ALL{C23($m.siegeforce.cfa, $m.siegeforce.tfa), $m.siegeforce.moneya > 0}",
+        "      SEQ(0, 1, 1)",
+        "        MiscLogNode(99, 0, $m.siegeforce.p_samea)",
+        "        VariableGetFootholdInfoNode($m.siegeforce.ca, 36, $m.siegeforce.sa)",
+        "        VariableMinusValueNode($m.siegeforce.sa, 5000)",
+        "        IF $m.siegeforce.sa > 0",
+        "          SEQ(0, 2, 1)",
+        "            VariableGetDistanceNode(5, $m.siegeforce.ca, 5, $ad8610fe, $m.siegeforce.da)",
+        "            SEQ(0, 0, 1)",
+        "              IF NOT $m.siegeforce.da > 12",
+        "                VariableMultiValueNode($m.siegeforce.sa, 35)",
+        "              IF NOT $m.siegeforce.da > 18",
+        "                VariableMultiValueNode($m.siegeforce.sa, 20)",
+        "              IF NOT $m.siegeforce.da > 30",
+        "                VariableMultiValueNode($m.siegeforce.sa, 15)",
+        "              VariableCreateNode($m.siegeforce.sa, 0)",
+        "            VariableDivideValueNode($m.siegeforce.sa, 100)",
+        "            VariablePlusVariableNode($m.siegeforce.suma, $m.siegeforce.sa)",
+        "            MiscLogNode(99, 0, $m.siegeforce.p_reliefa)",
+        "  VariableMinValueNode($m.siegeforce.suma, 45000)",
+        "  VariablePlusVariableNode($b57eaf65, $m.siegeforce.suma)",
+        "  LoopListElementNode(2, 10, $5480bf39, $m.siegeforce.x)",
+        "    VariableGetFootholdInfoNode($m.siegeforce.x, 3, $m.siegeforce.xf)",
+        "    VariableGetFootholdInfoNode($m.siegeforce.x, 10, $m.siegeforce.food)",
+        "    VariableGetFootholdInfoNode($m.siegeforce.x, 22, $m.siegeforce.mor)",
+        "    IF ALL{C8(5, $m.siegeforce.x), $m.siegeforce.mor > 49, NOT C24(5, $m.siegeforce.x, $ceb8be84), $m.siegeforce.food > $633d2ff2, NOT C24(5, $m.siegeforce.x, $3eef1f81), NOT C24(5, $m.siegeforce.x, $6f2dd216), C43(5, $ad8610fe, 5, $m.siegeforce.x, 20000), NOT C130(5, $m.siegeforce.x, 5, $ad8610fe, $m.siegeforce.xf)}",
+        "      ListAddFootholdUniqueNode($m.siegeforce.x, $3eef1f81)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2202,
+        "type": "CommandFootholdAttackDepatureNode"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.siegeforce.sumb, 0)",
+        "  VariableGetFootholdInfoNode($54eea2d9, 3, $m.siegeforce.tfb)",
+        "  VariableGetFootholdInfoNode($54eea2d9, 26, $m.siegeforce.nbb)",
+        "  LoopListElementNode(2, 10, $m.siegeforce.nbb, $m.siegeforce.cb)",
+        "    VariableGetFootholdInfoNode($m.siegeforce.cb, 3, $m.siegeforce.cfb)",
+        "    VariableGetFootholdInfoNode($m.siegeforce.cb, 34, $m.siegeforce.moneyb)",
+        "    IF ALL{C23($m.siegeforce.cfb, $m.siegeforce.tfb), $m.siegeforce.moneyb > 0}",
+        "      SEQ(0, 1, 1)",
+        "        MiscLogNode(99, 0, $m.siegeforce.p_sameb)",
+        "        VariableGetFootholdInfoNode($m.siegeforce.cb, 36, $m.siegeforce.sb)",
+        "        VariableMinusValueNode($m.siegeforce.sb, 5000)",
+        "        IF $m.siegeforce.sb > 0",
+        "          SEQ(0, 2, 1)",
+        "            VariableGetDistanceNode(5, $m.siegeforce.cb, 5, $54eea2d9, $m.siegeforce.db)",
+        "            SEQ(0, 0, 1)",
+        "              IF NOT $m.siegeforce.db > 12",
+        "                VariableMultiValueNode($m.siegeforce.sb, 35)",
+        "              IF NOT $m.siegeforce.db > 18",
+        "                VariableMultiValueNode($m.siegeforce.sb, 20)",
+        "              IF NOT $m.siegeforce.db > 30",
+        "                VariableMultiValueNode($m.siegeforce.sb, 15)",
+        "              VariableCreateNode($m.siegeforce.sb, 0)",
+        "            VariableDivideValueNode($m.siegeforce.sb, 100)",
+        "            VariablePlusVariableNode($m.siegeforce.sumb, $m.siegeforce.sb)",
+        "            MiscLogNode(99, 0, $m.siegeforce.p_reliefb)",
+        "  VariableMinValueNode($m.siegeforce.sumb, 45000)",
+        "  VariablePlusVariableNode($b57eaf65, $m.siegeforce.sumb)"
+      ]
+    }
+  ],
+  "dll": [
+    "probe"
+  ]
+}

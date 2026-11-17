@@ -1,0 +1,323 @@
+{
+  "id": "siegeplano",
+  "name": "攻城评估第一版，只给奇数编号势力（A/B 对照用）",
+  "description": "攻城评估第一版（archive/siegeplan_v1.json）的拷贝，插入的逻辑外面包了「势力编号是奇数才执行」，只在和第二版（默认的 siegeplan）做 A/B 时用（--ab even:siegeplan）。",
+  "priority": 0,
+  "ops": [
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1956,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    GetMyselfForceNode($m.siegeplano.abf)",
+        "    VariableGetForceInfoNode($m.siegeplano.abf, 0, $m.siegeplano.abid)",
+        "    VariableSetVariableSpecifiedTypeNode(14, $m.siegeplano.abh, $m.siegeplano.abid)",
+        "    VariableDivideValueNode($m.siegeplano.abh, 2)",
+        "    VariableMultiValueNode($m.siegeplano.abh, 2)",
+        "    VariableMinusVariableNode($m.siegeplano.abid, $m.siegeplano.abh)",
+        "    IF $m.siegeplano.abid >= 1",
+        "      VariableCreateNode($m.siegeplano.keep, 0)",
+        "  MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2015,
+        "type": "GetFootholdFightingStrengthNode"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    GetMyselfForceNode($m.siegeplano.abf)",
+        "    VariableGetForceInfoNode($m.siegeplano.abf, 0, $m.siegeplano.abid)",
+        "    VariableSetVariableSpecifiedTypeNode(14, $m.siegeplano.abh, $m.siegeplano.abid)",
+        "    VariableDivideValueNode($m.siegeplano.abh, 2)",
+        "    VariableMultiValueNode($m.siegeplano.abh, 2)",
+        "    VariableMinusVariableNode($m.siegeplano.abid, $m.siegeplano.abh)",
+        "    IF $m.siegeplano.abid >= 1",
+        "      IF $m.siegeplano.keep > 0",
+        "        SEQ(0, 2, 1)",
+        "          VariableCreateNode($9f3e3992, 0)",
+        "          VariablePlusVariableNode($9f3e3992, $m.siegeplano.keep)",
+        "          VariableCreateNode($m.siegeplano.keep, 0)",
+        "  MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2188,
+        "type": "GetFootholdFightingStrengthNode"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    GetMyselfForceNode($m.siegeplano.abf)",
+        "    VariableGetForceInfoNode($m.siegeplano.abf, 0, $m.siegeplano.abid)",
+        "    VariableSetVariableSpecifiedTypeNode(14, $m.siegeplano.abh, $m.siegeplano.abid)",
+        "    VariableDivideValueNode($m.siegeplano.abh, 2)",
+        "    VariableMultiValueNode($m.siegeplano.abh, 2)",
+        "    VariableMinusVariableNode($m.siegeplano.abid, $m.siegeplano.abh)",
+        "    IF $m.siegeplano.abid >= 1",
+        "      IF $m.siegeplano.keep > 0",
+        "        SEQ(0, 2, 1)",
+        "          VariableCreateNode($9f3e3992, 0)",
+        "          VariablePlusVariableNode($9f3e3992, $m.siegeplano.keep)",
+        "          VariableCreateNode($m.siegeplano.keep, 0)",
+        "  MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2098,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    GetMyselfForceNode($m.siegeplano.abf)",
+        "    VariableGetForceInfoNode($m.siegeplano.abf, 0, $m.siegeplano.abid)",
+        "    VariableSetVariableSpecifiedTypeNode(14, $m.siegeplano.abh, $m.siegeplano.abid)",
+        "    VariableDivideValueNode($m.siegeplano.abh, 2)",
+        "    VariableMultiValueNode($m.siegeplano.abh, 2)",
+        "    VariableMinusVariableNode($m.siegeplano.abid, $m.siegeplano.abh)",
+        "    IF $m.siegeplano.abid >= 1",
+        "      SEQ(0, 2, 1)",
+        "        VariableCreateNode($m.siegeplano.keep, 0)",
+        "        VariablePlusVariableNode($m.siegeplano.keep, $9f3e3992)",
+        "        VariableMultiValueNode($9f3e3992, 60)",
+        "        VariableDivideValueNode($9f3e3992, 100)",
+        "  MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 2098,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    GetMyselfForceNode($m.siegeplano.abf)",
+        "    VariableGetForceInfoNode($m.siegeplano.abf, 0, $m.siegeplano.abid)",
+        "    VariableSetVariableSpecifiedTypeNode(14, $m.siegeplano.abh, $m.siegeplano.abid)",
+        "    VariableDivideValueNode($m.siegeplano.abh, 2)",
+        "    VariableMultiValueNode($m.siegeplano.abh, 2)",
+        "    VariableMinusVariableNode($m.siegeplano.abid, $m.siegeplano.abh)",
+        "    IF $m.siegeplano.abid >= 1",
+        "      IF $m.siegeplano.keep > 0",
+        "        SEQ(0, 2, 1)",
+        "          VariableCreateNode($9f3e3992, 0)",
+        "          VariablePlusVariableNode($9f3e3992, $m.siegeplano.keep)",
+        "          VariableCreateNode($m.siegeplano.keep, 0)",
+        "  MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2202,
+        "type": "CommandFootholdAttackDepatureNode"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    GetMyselfForceNode($m.siegeplano.abf)",
+        "    VariableGetForceInfoNode($m.siegeplano.abf, 0, $m.siegeplano.abid)",
+        "    VariableSetVariableSpecifiedTypeNode(14, $m.siegeplano.abh, $m.siegeplano.abid)",
+        "    VariableDivideValueNode($m.siegeplano.abh, 2)",
+        "    VariableMultiValueNode($m.siegeplano.abh, 2)",
+        "    VariableMinusVariableNode($m.siegeplano.abid, $m.siegeplano.abh)",
+        "    IF $m.siegeplano.abid >= 1",
+        "      SEQ(0, 2, 1)",
+        "        VariableCreateNode($m.siegeplano.keep, 0)",
+        "        VariablePlusVariableNode($m.siegeplano.keep, $9f3e3992)",
+        "        VariableMultiValueNode($9f3e3992, 60)",
+        "        VariableDivideValueNode($9f3e3992, 100)",
+        "  MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 2202,
+        "type": "CommandFootholdAttackDepatureNode"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    GetMyselfForceNode($m.siegeplano.abf)",
+        "    VariableGetForceInfoNode($m.siegeplano.abf, 0, $m.siegeplano.abid)",
+        "    VariableSetVariableSpecifiedTypeNode(14, $m.siegeplano.abh, $m.siegeplano.abid)",
+        "    VariableDivideValueNode($m.siegeplano.abh, 2)",
+        "    VariableMultiValueNode($m.siegeplano.abh, 2)",
+        "    VariableMinusVariableNode($m.siegeplano.abid, $m.siegeplano.abh)",
+        "    IF $m.siegeplano.abid >= 1",
+        "      IF $m.siegeplano.keep > 0",
+        "        SEQ(0, 2, 1)",
+        "          VariableCreateNode($9f3e3992, 0)",
+        "          VariablePlusVariableNode($9f3e3992, $m.siegeplano.keep)",
+        "          VariableCreateNode($m.siegeplano.keep, 0)",
+        "  MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2077,
+        "type": "IF"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    GetMyselfForceNode($m.siegeplano.abf)",
+        "    VariableGetForceInfoNode($m.siegeplano.abf, 0, $m.siegeplano.abid)",
+        "    VariableSetVariableSpecifiedTypeNode(14, $m.siegeplano.abh, $m.siegeplano.abid)",
+        "    VariableDivideValueNode($m.siegeplano.abh, 2)",
+        "    VariableMultiValueNode($m.siegeplano.abh, 2)",
+        "    VariableMinusVariableNode($m.siegeplano.abid, $m.siegeplano.abh)",
+        "    IF $m.siegeplano.abid >= 1",
+        "      SEQ(0, 2, 1)",
+        "        VariableCreateNode($m.siegeplano.sumd, 0)",
+        "        VariableGetFootholdInfoNode($ad8610fe, 3, $m.siegeplano.tfd)",
+        "        VariableGetFootholdInfoNode($ad8610fe, 26, $m.siegeplano.nbd)",
+        "        LoopListElementNode(2, 10, $m.siegeplano.nbd, $m.siegeplano.cd)",
+        "          VariableGetFootholdInfoNode($m.siegeplano.cd, 3, $m.siegeplano.cfd)",
+        "          VariableGetFootholdInfoNode($m.siegeplano.cd, 34, $m.siegeplano.moneyd)",
+        "          IF ALL{C23($m.siegeplano.cfd, $m.siegeplano.tfd), $m.siegeplano.moneyd > 0}",
+        "            SEQ(0, 1, 1)",
+        "              VariableGetFootholdInfoNode($m.siegeplano.cd, 36, $m.siegeplano.sd)",
+        "              VariableMinusValueNode($m.siegeplano.sd, 5000)",
+        "              IF $m.siegeplano.sd > 0",
+        "                SEQ(0, 2, 1)",
+        "                  VariableGetDistanceNode(5, $m.siegeplano.cd, 5, $ad8610fe, $m.siegeplano.dd)",
+        "                  SEQ(0, 0, 1)",
+        "                    IF NOT $m.siegeplano.dd > 12",
+        "                      VariableMultiValueNode($m.siegeplano.sd, 35)",
+        "                    IF NOT $m.siegeplano.dd > 18",
+        "                      VariableMultiValueNode($m.siegeplano.sd, 20)",
+        "                    IF NOT $m.siegeplano.dd > 30",
+        "                      VariableMultiValueNode($m.siegeplano.sd, 15)",
+        "                    VariableCreateNode($m.siegeplano.sd, 0)",
+        "                  VariableDivideValueNode($m.siegeplano.sd, 100)",
+        "                  VariablePlusVariableNode($m.siegeplano.sumd, $m.siegeplano.sd)",
+        "        VariableMinValueNode($m.siegeplano.sumd, 45000)",
+        "        VariablePlusVariableNode($19fcd973, $m.siegeplano.sumd)",
+        "  MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2098,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    GetMyselfForceNode($m.siegeplano.abf)",
+        "    VariableGetForceInfoNode($m.siegeplano.abf, 0, $m.siegeplano.abid)",
+        "    VariableSetVariableSpecifiedTypeNode(14, $m.siegeplano.abh, $m.siegeplano.abid)",
+        "    VariableDivideValueNode($m.siegeplano.abh, 2)",
+        "    VariableMultiValueNode($m.siegeplano.abh, 2)",
+        "    VariableMinusVariableNode($m.siegeplano.abid, $m.siegeplano.abh)",
+        "    IF $m.siegeplano.abid >= 1",
+        "      SEQ(0, 2, 1)",
+        "        VariableCreateNode($m.siegeplano.suma, 0)",
+        "        VariableGetFootholdInfoNode($ad8610fe, 3, $m.siegeplano.tfa)",
+        "        VariableGetFootholdInfoNode($ad8610fe, 26, $m.siegeplano.nba)",
+        "        LoopListElementNode(2, 10, $m.siegeplano.nba, $m.siegeplano.ca)",
+        "          VariableGetFootholdInfoNode($m.siegeplano.ca, 3, $m.siegeplano.cfa)",
+        "          VariableGetFootholdInfoNode($m.siegeplano.ca, 34, $m.siegeplano.moneya)",
+        "          IF ALL{C23($m.siegeplano.cfa, $m.siegeplano.tfa), $m.siegeplano.moneya > 0}",
+        "            SEQ(0, 1, 1)",
+        "              VariableGetFootholdInfoNode($m.siegeplano.ca, 36, $m.siegeplano.sa)",
+        "              VariableMinusValueNode($m.siegeplano.sa, 5000)",
+        "              IF $m.siegeplano.sa > 0",
+        "                SEQ(0, 2, 1)",
+        "                  VariableGetDistanceNode(5, $m.siegeplano.ca, 5, $ad8610fe, $m.siegeplano.da)",
+        "                  SEQ(0, 0, 1)",
+        "                    IF NOT $m.siegeplano.da > 12",
+        "                      VariableMultiValueNode($m.siegeplano.sa, 35)",
+        "                    IF NOT $m.siegeplano.da > 18",
+        "                      VariableMultiValueNode($m.siegeplano.sa, 20)",
+        "                    IF NOT $m.siegeplano.da > 30",
+        "                      VariableMultiValueNode($m.siegeplano.sa, 15)",
+        "                    VariableCreateNode($m.siegeplano.sa, 0)",
+        "                  VariableDivideValueNode($m.siegeplano.sa, 100)",
+        "                  VariablePlusVariableNode($m.siegeplano.suma, $m.siegeplano.sa)",
+        "        VariableMinValueNode($m.siegeplano.suma, 45000)",
+        "        VariablePlusVariableNode($b57eaf65, $m.siegeplano.suma)",
+        "        LoopListElementNode(2, 10, $5480bf39, $m.siegeplano.x)",
+        "          VariableGetFootholdInfoNode($m.siegeplano.x, 3, $m.siegeplano.xf)",
+        "          VariableGetFootholdInfoNode($m.siegeplano.x, 10, $m.siegeplano.food)",
+        "          VariableGetFootholdInfoNode($m.siegeplano.x, 22, $m.siegeplano.mor)",
+        "          IF ALL{C8(5, $m.siegeplano.x), $m.siegeplano.mor > 49, NOT C24(5, $m.siegeplano.x, $ceb8be84), $m.siegeplano.food > $633d2ff2, NOT C24(5, $m.siegeplano.x, $3eef1f81), NOT C24(5, $m.siegeplano.x, $6f2dd216), C43(5, $ad8610fe, 5, $m.siegeplano.x, 20000), NOT C130(5, $m.siegeplano.x, 5, $ad8610fe, $m.siegeplano.xf)}",
+        "            ListAddFootholdUniqueNode($m.siegeplano.x, $3eef1f81)",
+        "  MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2202,
+        "type": "CommandFootholdAttackDepatureNode"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    GetMyselfForceNode($m.siegeplano.abf)",
+        "    VariableGetForceInfoNode($m.siegeplano.abf, 0, $m.siegeplano.abid)",
+        "    VariableSetVariableSpecifiedTypeNode(14, $m.siegeplano.abh, $m.siegeplano.abid)",
+        "    VariableDivideValueNode($m.siegeplano.abh, 2)",
+        "    VariableMultiValueNode($m.siegeplano.abh, 2)",
+        "    VariableMinusVariableNode($m.siegeplano.abid, $m.siegeplano.abh)",
+        "    IF $m.siegeplano.abid >= 1",
+        "      SEQ(0, 2, 1)",
+        "        VariableCreateNode($m.siegeplano.sumb, 0)",
+        "        VariableGetFootholdInfoNode($54eea2d9, 3, $m.siegeplano.tfb)",
+        "        VariableGetFootholdInfoNode($54eea2d9, 26, $m.siegeplano.nbb)",
+        "        LoopListElementNode(2, 10, $m.siegeplano.nbb, $m.siegeplano.cb)",
+        "          VariableGetFootholdInfoNode($m.siegeplano.cb, 3, $m.siegeplano.cfb)",
+        "          VariableGetFootholdInfoNode($m.siegeplano.cb, 34, $m.siegeplano.moneyb)",
+        "          IF ALL{C23($m.siegeplano.cfb, $m.siegeplano.tfb), $m.siegeplano.moneyb > 0}",
+        "            SEQ(0, 1, 1)",
+        "              VariableGetFootholdInfoNode($m.siegeplano.cb, 36, $m.siegeplano.sb)",
+        "              VariableMinusValueNode($m.siegeplano.sb, 5000)",
+        "              IF $m.siegeplano.sb > 0",
+        "                SEQ(0, 2, 1)",
+        "                  VariableGetDistanceNode(5, $m.siegeplano.cb, 5, $54eea2d9, $m.siegeplano.db)",
+        "                  SEQ(0, 0, 1)",
+        "                    IF NOT $m.siegeplano.db > 12",
+        "                      VariableMultiValueNode($m.siegeplano.sb, 35)",
+        "                    IF NOT $m.siegeplano.db > 18",
+        "                      VariableMultiValueNode($m.siegeplano.sb, 20)",
+        "                    IF NOT $m.siegeplano.db > 30",
+        "                      VariableMultiValueNode($m.siegeplano.sb, 15)",
+        "                    VariableCreateNode($m.siegeplano.sb, 0)",
+        "                  VariableDivideValueNode($m.siegeplano.sb, 100)",
+        "                  VariablePlusVariableNode($m.siegeplano.sumb, $m.siegeplano.sb)",
+        "        VariableMinValueNode($m.siegeplano.sumb, 45000)",
+        "        VariablePlusVariableNode($b57eaf65, $m.siegeplano.sumb)",
+        "  MiscDummyNode(1)"
+      ]
+    }
+  ]
+}

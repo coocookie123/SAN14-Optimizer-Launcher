@@ -1,0 +1,2215 @@
+{
+  "_说明": [
+    "Mod 用到的全部特征码和 RTTI 类名。Python 端（tools/sigs.py）直接读这个文件；DLL 用 overlay/build.py 由它生成的 overlay/sigs_gen.h。",
+    "where：scan 扫 .text；vslot [rtti 记录名, 槽位] 在虚表某一项的函数开头比对；target 在另一条记录某字段的跳转目标处比对；scan_from 从另一条记录的字段目标起扫 range 字节；rtti 按 MSVC RTTI 类名找唯一的虚表。",
+    "count：scan / scan_from 要命中的次数（目前都是 1）。optional：true 或功能列表，表示这条找不到时该功能照常（只记一条说明）。",
+    "variants：每个变体是一份特征码和字段，versions 是它适用的游戏版本。新版本要换特征码时加一个变体，旧的留着。",
+    "fields：从命中处取的值。at 是相对命中处的偏移（可为负）；kind：rel 是 call/jmp/rip 相对寻址（指令 len 字节，以 32 位位移结尾，值是目标地址），site 是补丁位置，u8/u16/u32/i32 是指令里的常数，bytes 是一段字节。",
+    "expect：这个值在原版里应该是什么，对不上就算失败（soft: true 时只提示，因为代码自己从游戏里读这个值）。bytes/site 的 expect 是十六进制，可含 ??，按前缀比较。patched：Mod 自己写进去的字节，也算正常。to：rel 目标应在哪一节（text/data/rdata）。expect_str：rel 目标处的字符串。same_as：和另一条记录的某个值必须相同。",
+    "rva：各版本里命中处和各字段的 RVA，由 python -P tools/sigcheck.py --record 写入。anchors：游戏更新后 tools/sigfind.py 用来重新找到这段代码的线索。"
+  ],
+  "format": 1,
+  "features": {
+    "skip_report": {
+      "name": "跳过报告",
+      "note": "第 5 版补丁（Python 改 CReportDisplayState::Enter）。DLL 不可用时的后备，也是启动时的版本检查。"
+    },
+    "skip_report_dll": {
+      "name": "无停顿跳过报告（DLL）",
+      "note": "第 6 版：bin/san14_overlay.dll 替换两个状态的 Update。不可用时退回第 5 版。"
+    },
+    "report_button": {
+      "name": "回看报告按钮",
+      "note": "按钮要读状态栈；第 5 版模式下快速弹出报告要改等待时间。"
+    },
+    "area_bonus": {
+      "name": "府加成"
+    },
+    "takeover": {
+      "name": "看海接管"
+    },
+    "ai_observe": {
+      "name": "AI 记录",
+      "note": "ai/gamedata.py、ai/observe.py：数据根和各对象数组。"
+    },
+    "ai_tree": {
+      "name": "AI 改树（离线工具）",
+      "offline": true,
+      "note": "改树本身不碰 exe；游戏更新后用 ai/make_node_types.py 重建 node_types.json 时要用这几处。"
+    },
+    "ai_dll": {
+      "name": "AI 的 DLL 层（精确站位等）",
+      "note": "bin/san14_ai.dll 在游戏读行为树时（代码已解密）按 RTTI 找到推进状态 CProgressState 的虚表，换掉第 5 项 Update：原版 Update 跑完后看日期，换日就按开启的功能（SAN14_AI_FEATURES）调整电脑部队的行动和目标。部队字段的偏移从原版的设置函数里读。对不上就不挂，AI 照常运行。"
+    },
+    "trap_near": {
+      "name": "陷阱近身触发",
+      "note": "bin/san14_ai.dll（SAN14_TRAP_NEAR=1）在游戏读行为树时（代码已解密）挂住设施「发动范围」的取值函数：陷阱类设施（类别 4）大于 1 的一律当 1，敌方部队到陷阱旁 1 格内才触发；效果范围走另一个取值函数，不变。找不到就不挂，陷阱照原版。"
+    }
+  },
+  "versions": {
+    "1.0.2.58226": {
+      "pe_timestamp": "0x6ad06c1b",
+      "size_of_image": "0x2a05000",
+      "exe_size": 30630880,
+      "exe_mtime": 1793841123,
+      "steam_build": 25953386,
+      "dump": "analysis/dump_1793841123",
+      "tested": true
+    }
+  },
+  "sigs": {
+    "report_enter": {
+      "desc": "CReportDisplayState::Enter（虚表第 1 项）：v4 把「子状态 = 4，打开第 0 页」换成「子状态 = 3，动画状态 = 3」；v5 再把分配根界面的 mov ecx,188h 换成 jmp",
+      "features": [
+        "skip_report"
+      ],
+      "users": [
+        "tools/patch.py"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "vslot": [
+            ".?AVCReportDisplayState@@",
+            1
+          ]
+        },
+        {
+          "const": "0x188"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "C7 44 24 20 00 00 00 00 BA 0F 00 00 00 44 8D 4A F2 44 8D 42 0D 48 8B 8B 80 04 00 00 E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 83 C0 50 74 10 48 8D 50 10 48 8D 8B A0 04 00 00 E8 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 85 C0 74 22 E8 ?? ?? ?? ?? 83 38 00 74 18 E8 ?? ?? ?? ?? 48 8B 88 80 00 00 00 4C 8B 01 33 D2 41 FF 90 C8 00 00 00",
+          "fields": {
+            "site": {
+              "at": 60,
+              "kind": "bytes",
+              "len": 20,
+              "expect": "c7 83 70 04 00 00 04 00 00 00 33 d2 48 8b cb e8",
+              "patched": "c7 83 70 04 00 00 03 00 00 00 c7 83 74 04 00 00 03 00 00 00"
+            },
+            "root": {
+              "at": -89,
+              "kind": "bytes",
+              "len": 5,
+              "expect": "b9 88 01 00 00",
+              "patched": "e9 75 00 00 00"
+            },
+            "root_pre": {
+              "at": -92,
+              "kind": "bytes",
+              "len": 3,
+              "expect": "48 8b d9"
+            },
+            "root_target": {
+              "at": 33,
+              "kind": "bytes",
+              "len": 1,
+              "expect": "e8"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "67fd0b",
+          "site": "67fd47",
+          "root": "67fcb2",
+          "root_pre": "67fcaf",
+          "root_target": "67fd2c"
+        }
+      }
+    },
+    "report_update": {
+      "desc": "CReportDisplayState::Update（虚表第 5 项）按子状态分支；v3 曾改 je0。现在只用来认出并还原 2026-11-10 的试验补丁",
+      "features": [
+        "skip_report"
+      ],
+      "optional": true,
+      "users": [
+        "tools/patch.py"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "vslot": [
+            ".?AVCReportDisplayState@@",
+            5
+          ]
+        },
+        {
+          "const": "0x474"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "83 B9 74 04 00 00 03 74 0A E8 ?? ?? ?? ?? E9 49 01 00 00 E8 ?? ?? ?? ?? 85 C0 0F 84 3C 01 00 00 8B 8B 70 04 00 00 85 C9 0F 84 ?? ?? ?? ?? 83 E9 01 0F 84 DE 00 00 00 83 E9 01 0F 84 9D 00 00 00 83 F9 01 0F 85 CC 00 00 00 83 BB 74 04 00 00 03",
+          "fields": {
+            "je0": {
+              "at": 40,
+              "kind": "rel",
+              "len": 6
+            },
+            "je2": {
+              "at": 58,
+              "kind": "rel",
+              "len": 6
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "67fe97",
+          "je0": "67ffa4",
+          "je2": "67ff74"
+        }
+      }
+    },
+    "report_coroutine": {
+      "desc": "报告协程里压入 CReportDisplayState 的地方；v1/v2 曾改这里。现在只用来认出并还原试验补丁",
+      "features": [
+        "skip_report"
+      ],
+      "optional": true,
+      "users": [
+        "tools/patch.py"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "func_of": "us_update.coroutine"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "E8 ?? ?? ?? ?? 48 8B C8 4C 8D 4C 24 28 4C 8D 84 24 90 00 00 00 48 8D 15 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 89 5C 24 30 48 8D 44 24 28 48 89 44 24 60 E8 ?? ?? ?? ?? 48 8B C8 4C 8D 4C 24 28 4C 8D 84 24 88 00 00 00 48 8D 15 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B CB E8 ?? ?? ?? ??",
+          "fields": {
+            "site": {
+              "at": 41,
+              "kind": "bytes",
+              "len": 26,
+              "expect": "48 8d 44 24 28 48 89 84 24 98 00 00 00 48 8d 05 ?? ?? ?? ?? 48 89 44 24 28 48"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "459dce",
+          "site": "459df7"
+        }
+      }
+    },
+    "report_wait_update": {
+      "desc": "CReportWaitState::Update（虚表第 5 项）：[this+470h]==1 或超过 2000 毫秒时弹出自己。Python 在第 5 版模式下回看报告时临时把 2000 改成 0；DLL 替换这一项",
+      "features": [
+        "report_button",
+        "skip_report_dll"
+      ],
+      "optional": [
+        "report_button"
+      ],
+      "users": [
+        "tools/patch.py",
+        "overlay/san14_overlay.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "checks": [
+        {
+          "vslot_is": [
+            "report_wait_vtable",
+            5
+          ]
+        }
+      ],
+      "anchors": [
+        {
+          "vslot": [
+            ".?AVCReportWaitState@@",
+            5
+          ]
+        },
+        {
+          "const": "0x7d0"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 53 48 83 EC 20 48 8B D9 E8 ?? ?? ?? ?? 85 C0 74 67 E8 ?? ?? ?? ?? BA 01 00 00 00 48 8B C8 E8 ?? ?? ?? ?? 85 C0 74 0A C7 83 70 04 00 00 01 00 00 00 E8 ?? ?? ?? ?? 2B 83 78 04 00 00 8B 93 70 04 00 00 85 D2 74 21 83 FA 01 75 2D C7 83 70 04 00 00 00 00 00 00 E8 ?? ?? ?? ?? 48 8B C8 48 83 C4 20 5B E9 ?? ?? ?? ?? 3D ?? ?? ?? ?? 76 0A C7 83 70 04 00 00 01 00 00 00 48 83 C4 20 5B C3",
+          "fields": {
+            "is_top": {
+              "at": 9,
+              "kind": "rel",
+              "len": 5,
+              "same_as": "us_update.is_top"
+            },
+            "state_off": {
+              "at": 42,
+              "kind": "u32",
+              "expect": "0x470"
+            },
+            "wait_ms": {
+              "at": 105,
+              "kind": "u32",
+              "expect": 2000,
+              "patched": 0
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "680040",
+          "is_top": "573b30"
+        }
+      }
+    },
+    "report_wait_vtable": {
+      "desc": "CReportWaitState 的虚表（DLL 替换第 5 项 Update）",
+      "features": [
+        "skip_report_dll"
+      ],
+      "users": [
+        "overlay/san14_overlay.cpp"
+      ],
+      "where": {
+        "rtti": ".?AVCReportWaitState@@"
+      },
+      "slots": {
+        "update": 5
+      },
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "1433c28",
+          "update": "680040"
+        }
+      }
+    },
+    "strategy_vtable": {
+      "desc": "CUserStrategyState 的虚表：第 3 项恢复（HUD、地图输入），第 5 项 Update，第 11 项打开命令界面",
+      "features": [
+        "skip_report_dll"
+      ],
+      "users": [
+        "overlay/san14_overlay.cpp"
+      ],
+      "where": {
+        "rtti": ".?AVCUserStrategyState@@"
+      },
+      "slots": {
+        "resume": 3,
+        "update": 5,
+        "open_cmd": 11
+      },
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "13daef0",
+          "resume": "44bfa0",
+          "update": "4506e0",
+          "open_cmd": "44e140"
+        }
+      }
+    },
+    "us_update": {
+      "desc": "CUserStrategyState::Update 开头：+9 判断状态在栈顶，+0x16 读子阶段（优化伴侣改的就是这条），+0x28 子阶段 0 时跳到报告协程",
+      "features": [
+        "skip_report_dll"
+      ],
+      "users": [
+        "overlay/san14_overlay.cpp"
+      ],
+      "where": {
+        "vslot": [
+          "strategy_vtable",
+          5
+        ]
+      },
+      "anchors": [
+        {
+          "vslot": [
+            ".?AVCUserStrategyState@@",
+            5
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 56 48 83 EC 40 48 8B F1 E8 ?? ?? ?? ?? 85 C0 0F 84 ?? ?? ?? ?? 8B 86 70 04 00 00 85 C0 75 0D 48 8B CE 48 83 C4 40 5E E9 ?? ?? ?? ?? 83 F8 05",
+          "fields": {
+            "is_top": {
+              "at": 9,
+              "kind": "rel",
+              "len": 5
+            },
+            "stage_read": {
+              "at": 22,
+              "kind": "bytes",
+              "len": 6,
+              "expect": "8b 86 70 04 00 00"
+            },
+            "stage_off": {
+              "at": 24,
+              "kind": "u32",
+              "expect": "0x470",
+              "soft": true
+            },
+            "coroutine": {
+              "at": 40,
+              "kind": "rel",
+              "len": 5
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "4506e0",
+          "is_top": "573b30",
+          "stage_read": "4506f6",
+          "coroutine": "459d30"
+        }
+      }
+    },
+    "report_co_head": {
+      "desc": "报告协程开头：+0x12 调用看海判断，是看海就直接返回",
+      "features": [
+        "skip_report_dll"
+      ],
+      "users": [
+        "overlay/san14_overlay.cpp"
+      ],
+      "where": {
+        "target": "us_update.coroutine"
+      },
+      "anchors": [
+        {
+          "func_of": "us_update.coroutine"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 53 48 83 EC 70 48 C7 44 24 20 FE FF FF FF 48 8B D9 E8 ?? ?? ?? ?? 85 C0 0F 85",
+          "fields": {
+            "is_spectator": {
+              "at": 18,
+              "kind": "rel",
+              "len": 5,
+              "same_as": "spectator_check"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "459d30",
+          "is_spectator": "336c60"
+        }
+      }
+    },
+    "report_co_tail": {
+      "desc": "报告协程结尾：回合开始提示音（取标记、取声音管理器、播放）",
+      "features": [
+        "skip_report_dll"
+      ],
+      "users": [
+        "overlay/san14_overlay.cpp"
+      ],
+      "where": {
+        "scan_from": "us_update.coroutine",
+        "range": 1024
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "func_of": "us_update.coroutine"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "E8 ?? ?? ?? ?? 48 85 C0 74 1C E8 ?? ?? ?? ?? 83 38 00 74 12 E8 ?? ?? ?? ?? 48 8B C8 BA 01 00 00 00 E8 ?? ?? ?? ?? 48 83 C4 70 5B C3",
+          "fields": {
+            "snd_flag": {
+              "at": 0,
+              "kind": "rel",
+              "len": 5
+            },
+            "snd_flag2": {
+              "at": 10,
+              "kind": "rel",
+              "len": 5,
+              "same_as": "report_co_tail.snd_flag"
+            },
+            "snd_mgr": {
+              "at": 20,
+              "kind": "rel",
+              "len": 5
+            },
+            "play_snd": {
+              "at": 33,
+              "kind": "rel",
+              "len": 5
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "459e96",
+          "snd_flag": "572af0",
+          "snd_flag2": "572af0",
+          "snd_mgr": "572b20",
+          "play_snd": "5184b0"
+        }
+      }
+    },
+    "report_callback": {
+      "desc": "报告窗口关闭回调的函数体（4569e0）：唤醒协程、重新显示 HUD、恢复进行按钮、子阶段 = 1。DLL 跳过报告时照做一遍（不唤醒协程），用到的结构偏移都从这里读",
+      "features": [
+        "skip_report_dll"
+      ],
+      "users": [
+        "overlay/san14_overlay.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "string": "CGameState"
+        },
+        {
+          "calls": "spectator_check.mgr_getter"
+        },
+        {
+          "calls": "spectator_check.find_state"
+        },
+        {
+          "const": "0x1d0"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 57 48 83 EC 20 48 8B F9 E8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B C8 48 8D 15 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 85 C0 74 32 48 8B 80 80 04 00 00 48 85 C0 74 26 48 8B 88 78 01 00 00 48 85 C9 74 1A 48 8B 89 88 01 00 00 48 85 C9 74 0E 48 8B 01 BA 01 00 00 00 FF 90 C8 00 00 00 E8 ?? ?? ?? ?? 48 8B C8 48 8D 15 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 85 C0 74 43 48 89 5C 24 30 48 8B 98 80 04 00 00 48 85 DB 74 1D 48 8B CB E8 ?? ?? ?? ?? 48 8B 8B D0 01 00 00 BA 01 00 00 00 48 8B 01 FF 90 D0 00 00 00 C7 87 70 04 00 00 01 00 00 00",
+          "fields": {
+            "wake": {
+              "at": 9,
+              "kind": "rel",
+              "len": 5
+            },
+            "get_mgr": {
+              "at": 14,
+              "kind": "rel",
+              "len": 5,
+              "same_as": "spectator_check.mgr_getter"
+            },
+            "state_name": {
+              "at": 22,
+              "kind": "rel",
+              "len": 7,
+              "to": "rdata",
+              "expect_str": "CGameState"
+            },
+            "find_state": {
+              "at": 29,
+              "kind": "rel",
+              "len": 5,
+              "same_as": "spectator_check.find_state"
+            },
+            "hud_off": {
+              "at": 42,
+              "kind": "u32",
+              "expect": "0x480",
+              "soft": true
+            },
+            "panel_off": {
+              "at": 54,
+              "kind": "u32",
+              "expect": "0x178",
+              "soft": true
+            },
+            "panel2_off": {
+              "at": 66,
+              "kind": "u32",
+              "expect": "0x188",
+              "soft": true
+            },
+            "panel_vfn": {
+              "at": 85,
+              "kind": "u32",
+              "expect": "0xc8",
+              "soft": true
+            },
+            "restore_btn": {
+              "at": 134,
+              "kind": "rel",
+              "len": 5
+            },
+            "btn_off": {
+              "at": 142,
+              "kind": "u32",
+              "expect": "0x1d0",
+              "soft": true
+            },
+            "btn_vfn": {
+              "at": 156,
+              "kind": "u32",
+              "expect": "0xd0",
+              "soft": true
+            },
+            "stage_off": {
+              "at": 162,
+              "kind": "u32",
+              "expect": "0x470",
+              "soft": true,
+              "same_as": "us_update.stage_off"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "4569e0",
+          "wake": "5743e0",
+          "get_mgr": "11060",
+          "state_name": "13479a8",
+          "find_state": "573950",
+          "restore_btn": "457c20"
+        }
+      }
+    },
+    "us_resume": {
+      "desc": "CUserStrategyState 虚表第 3 项（恢复：HUD、地图输入回调）",
+      "features": [
+        "skip_report_dll"
+      ],
+      "users": [
+        "overlay/san14_overlay.cpp"
+      ],
+      "where": {
+        "vslot": [
+          "strategy_vtable",
+          3
+        ]
+      },
+      "anchors": [
+        {
+          "vslot": [
+            ".?AVCUserStrategyState@@",
+            3
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 57 48 83 EC 70 48 C7 44 24 20 FE FF FF FF 48 89 9C 24 88 00 00 00 48 8B F9 E8",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "44bfa0"
+        }
+      }
+    },
+    "us_open_cmd": {
+      "desc": "CUserStrategyState 虚表第 11 项（参数 0：打开命令界面，子阶段变 2）",
+      "features": [
+        "skip_report_dll"
+      ],
+      "users": [
+        "overlay/san14_overlay.cpp"
+      ],
+      "where": {
+        "vslot": [
+          "strategy_vtable",
+          11
+        ]
+      },
+      "anchors": [
+        {
+          "vslot": [
+            ".?AVCUserStrategyState@@",
+            11
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 8B 81 70 04 00 00 33 F6 48 8B F9 83 F8 01",
+          "fields": {
+            "stage_off": {
+              "at": 17,
+              "kind": "u32",
+              "expect": "0x470",
+              "same_as": "us_update.stage_off"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "44e140"
+        }
+      }
+    },
+    "spectator_check": {
+      "desc": "看海判断（336c60）：取状态管理器，按名字找 CGameState，模式 == 1 就是看海。gamestate.py 从这里找到状态管理器",
+      "features": [
+        "skip_report",
+        "report_button",
+        "skip_report_dll"
+      ],
+      "users": [
+        "tools/gamestate.py"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "string": "CGameState"
+        },
+        {
+          "called_by": "us_update.coroutine"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "48 83 EC 28 E8 ?? ?? ?? ?? 48 8B C8 48 8D 15 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 85 C0 75 05 48 83 C4 28 C3 48 8B C8 E8 ?? ?? ?? ?? 33 C9 83 F8 01 0F 94 C1",
+          "fields": {
+            "mgr_getter": {
+              "at": 4,
+              "kind": "rel",
+              "len": 5
+            },
+            "state_name": {
+              "at": 12,
+              "kind": "rel",
+              "len": 7,
+              "to": "rdata",
+              "expect_str": "CGameState"
+            },
+            "find_state": {
+              "at": 19,
+              "kind": "rel",
+              "len": 5
+            },
+            "mode_getter": {
+              "at": 37,
+              "kind": "rel",
+              "len": 5
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "336c60",
+          "mgr_getter": "11060",
+          "state_name": "13479a8",
+          "find_state": "573950",
+          "mode_getter": "443b70"
+        }
+      }
+    },
+    "state_mgr": {
+      "desc": "状态管理器取址函数（11060）里的 lea rbx,[状态栈管理器]：+0x10 数量，+0x20 数组",
+      "features": [
+        "skip_report",
+        "report_button"
+      ],
+      "users": [
+        "tools/gamestate.py"
+      ],
+      "where": {
+        "scan_from": "spectator_check.mgr_getter",
+        "range": 128
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "func_of": "spectator_check.mgr_getter"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "48 8D 1D ?? ?? ?? ??",
+          "fields": {
+            "mgr": {
+              "at": 0,
+              "kind": "rel",
+              "len": 7,
+              "to": "data"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "110a7",
+          "mgr": "1b67310"
+        }
+      }
+    },
+    "area_bonus": {
+      "desc": "府加成计算函数（2b2b30）里读我方、超级电脑、顶级电脑三个值的 movd xmm7,[rip+X]（exe 里写死的 4、16、24）",
+      "features": [
+        "area_bonus"
+      ],
+      "users": [
+        "tools/area_bonus.py"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "refs": [
+            "data_root.root_ptr",
+            "auto_check.root_ptr",
+            "player_force_getter.root_ptr"
+          ]
+        },
+        {
+          "const": "0xdf30"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "66 0F 6E 3D ?? ?? ?? ?? 4C 8B 7C 24 50 48 8B 05 ?? ?? ?? ?? 0F 5B FF 83 FD 33 7F 0A 48 8B 9C E8 30 DF 00 00 EB 07 48 8B 98 30 DF 00 00 E8 ?? ?? ?? ?? 48 8B C8 E8 ?? ?? ?? ?? 48 8B CB 8B F8 E8 ?? ?? ?? ?? 85 C0 74 2B 48 8B CB E8 ?? ?? ?? ?? 85 C0 75 1F 83 FF 03 75 0A 66 0F 6E 3D ?? ?? ?? ?? EB 0D 83 FF 04 7C 0B 66 0F 6E 3D ?? ?? ?? ?? 0F 5B FF",
+          "fields": {
+            "player": {
+              "at": 0,
+              "kind": "rel",
+              "len": 8,
+              "to": "data"
+            },
+            "root_ptr": {
+              "at": 13,
+              "kind": "rel",
+              "len": 7,
+              "to": "data",
+              "same_as": "data_root.root_ptr"
+            },
+            "super": {
+              "at": 89,
+              "kind": "rel",
+              "len": 8,
+              "to": "data"
+            },
+            "ultimate": {
+              "at": 104,
+              "kind": "rel",
+              "len": 8,
+              "to": "data"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "2b2d4d",
+          "player": "1a4f6d0",
+          "root_ptr": "2783158",
+          "super": "1a4ccfc",
+          "ultimate": "1a4cd20"
+        }
+      }
+    },
+    "auto_check": {
+      "desc": "「自动操作」判断：mov rax,[数据根]; mov rcx,[rax+871e8h]（状态对象）; mov eax,[rcx+16a8h]; shr eax,8; and eax,1",
+      "features": [
+        "takeover"
+      ],
+      "users": [
+        "tools/takeover.py"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "refs": [
+            "data_root.root_ptr",
+            "player_force_getter.root_ptr"
+          ]
+        },
+        {
+          "const": "0x16a8"
+        },
+        {
+          "const": "0x871e8"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "48 8B 05 ?? ?? ?? ?? 48 8B 88 ?? ?? ?? ?? 8B 81 ?? ?? ?? ?? C1 E8 08 83 E0 01 C3",
+          "fields": {
+            "root_ptr": {
+              "at": 0,
+              "kind": "rel",
+              "len": 7,
+              "to": "data",
+              "same_as": "data_root.root_ptr"
+            },
+            "status_off": {
+              "at": 10,
+              "kind": "u32",
+              "expect": "0x871e8",
+              "soft": true
+            },
+            "flags_off": {
+              "at": 16,
+              "kind": "u32",
+              "expect": "0x16a8",
+              "soft": true
+            },
+            "auto_shift": {
+              "at": 22,
+              "kind": "u8",
+              "expect": "0x8"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "336780",
+          "root_ptr": "2783158"
+        }
+      }
+    },
+    "player_force_getter": {
+      "desc": "取玩家势力：movzx eax,[rcx+3Ah]（担当势力）; cmp eax,33h; ...; mov rax,[rax+rcx*8+0DF30h]",
+      "features": [
+        "takeover"
+      ],
+      "users": [
+        "tools/takeover.py"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "refs": [
+            "data_root.root_ptr",
+            "auto_check.root_ptr"
+          ]
+        },
+        {
+          "const": "0xdf30"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "0F B6 41 3A 83 F8 33 77 ?? 8B C8 48 8B 05 ?? ?? ?? ?? 48 8B 84 C8 30 DF 00 00 C3",
+          "fields": {
+            "player_off": {
+              "at": 3,
+              "kind": "u8",
+              "expect": "0x3a"
+            },
+            "force_max": {
+              "at": 6,
+              "kind": "u8",
+              "expect": "0x33"
+            },
+            "root_ptr": {
+              "at": 11,
+              "kind": "rel",
+              "len": 7,
+              "to": "data",
+              "same_as": "data_root.root_ptr"
+            },
+            "force_arr": {
+              "at": 22,
+              "kind": "u32",
+              "expect": "0xdf30"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "331820",
+          "root_ptr": "2783158"
+        }
+      }
+    },
+    "hud_layout": {
+      "desc": "左上角界面 CMainTopLayoutOffset 的虚表：不知道开局势力时，接管左上角头像的势力（+0x188 军团，军团 +0x10 势力）",
+      "features": [
+        "takeover"
+      ],
+      "optional": true,
+      "users": [
+        "tools/takeover.py"
+      ],
+      "where": {
+        "rtti": ".?AVCMainTopLayoutOffset@@"
+      },
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "1478cf0"
+        }
+      }
+    },
+    "data_root": {
+      "desc": "取城市（GetCity 的默认分支）：mov rax,[数据根]; cmp ecx,33h; jg; movsxd rcx,ecx; mov rax,[rax+rcx*8+0DD38h]。数据根下的各数组偏移见 ai/gamedata.py",
+      "features": [
+        "ai_dll",
+        "ai_observe"
+      ],
+      "users": [
+        "ai/gamedata.py",
+        "ai/observe.py",
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "refs": [
+            "auto_check.root_ptr",
+            "player_force_getter.root_ptr"
+          ]
+        },
+        {
+          "const": "0xdd38"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "48 8B 05 ?? ?? ?? ?? 83 F9 33 7F 0D 48 63 C9 48 8B 84 C8 38 DD 00 00",
+          "fields": {
+            "root_ptr": {
+              "at": 0,
+              "kind": "rel",
+              "len": 7,
+              "to": "data"
+            },
+            "city_max": {
+              "at": 9,
+              "kind": "u8",
+              "expect": "0x33"
+            },
+            "city_arr": {
+              "at": 19,
+              "kind": "u32",
+              "expect": "0xdd38"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "3dc05e",
+          "root_ptr": "2783158"
+        }
+      }
+    },
+    "bt_factory": {
+      "desc": "行为树游戏节点工厂（1ad90）：按类型哈希 cmp edx, imm32 分支，200 多种",
+      "features": [
+        "ai_tree"
+      ],
+      "users": [
+        "ai/make_node_types.py",
+        "ai/research/bt_vtables.py"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x8b432df4"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "41 8B F9 49 8B F0 33 DB 81 FA",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "1adb0"
+        }
+      }
+    },
+    "bt_loader_switch": {
+      "desc": "行为树加载函数（b2cae0）里内置节点的 switch：mov edx,[rbp-6Ch]; cmp edx, imm32",
+      "features": [
+        "ai_tree"
+      ],
+      "users": [
+        "ai/make_node_types.py",
+        "ai/research/bt_vtables.py"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0xf3836309"
+        },
+        {
+          "const": "0x9fb4c384"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "8B 55 94 81 FA",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "b2d084"
+        }
+      }
+    },
+    "bt_condition_cb": {
+      "desc": "条件节点的回调（c3160）：dec ecx 后按编号查跳转表，共 167 个条件函数",
+      "features": [
+        "ai_tree"
+      ],
+      "users": [
+        "ai/make_node_types.py"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0xa6"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "FF C9 4D 8B D9 4D 8B D0 B2 01 81 F9",
+          "fields": {
+            "max_id": {
+              "at": 12,
+              "kind": "u32",
+              "expect": "0xa6",
+              "soft": true
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "c3169"
+        }
+      }
+    },
+    "progress_vtable": {
+      "desc": "CProgressState（推进状态，看海、战斗阶段每帧在栈顶）的虚表；AI 的 DLL 换掉第 5 项 Update，原版跑完后按日期变化做每日调整",
+      "features": [
+        "ai_dll"
+      ],
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "rtti": ".?AVCProgressState@@"
+      },
+      "slots": {
+        "update": 5
+      },
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "13db1c0",
+          "update": "44f890"
+        }
+      }
+    },
+    "progress_update": {
+      "desc": "CProgressState::Update 开头（虚表第 5 项）：+0x3f 调用「状态在栈顶」判断，和 CUserStrategyState::Update 的同一个函数。用来确认第 5 项还是 Update",
+      "features": [
+        "ai_dll"
+      ],
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "vslot": [
+          "progress_vtable",
+          5
+        ]
+      },
+      "anchors": [
+        {
+          "vslot": [
+            ".?AVCProgressState@@",
+            5
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "48 8B C4 55 41 54 41 55 41 56 41 57 48 8D 68 ?? 48 81 EC ?? ?? ?? ?? 48 C7 45 ?? FE FF FF FF 48 89 58 08 48 89 70 10 48 89 78 18 0F 29 70 ?? 48 8B F1 E8 ?? ?? ?? ?? 8B D8 89 45 ?? 48 8B CE E8 ?? ?? ?? ?? 85 C0 0F 84",
+          "fields": {
+            "is_top": {
+              "at": 63,
+              "kind": "rel",
+              "len": 5,
+              "same_as": "us_update.is_top"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "44f890",
+          "is_top": "573b30"
+        }
+      }
+    },
+    "misclog_vtable": {
+      "desc": "行为树日志节点 CMiscLogNode 的虚表（原版的打印已编译掉，只读参数）。AI 的 DLL 在开了树探针（功能 probe）时换掉第 16 项执行函数：树里写 MiscLogNode(99, 0, $变量) 的地方每执行一次计一次数，每天写进日志，用来查改树后各分支走了几次。只是调试用，找不到就不挂",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "rtti": ".?AVCMiscLogNode@@"
+      },
+      "slots": {
+        "execute": 16
+      },
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "13549b8",
+          "execute": "84bb0"
+        }
+      }
+    },
+    "siege_assign_fn": {
+      "desc": "攻城出兵编成的配兵函数（43750）开头：rcx 编成上下文、rdx 出兵城、r8 武将、r9 出兵请求（+0x00 武将、+0x08 兵数、+0x0c 阵型）、第 5 个参数是这座城这次能出的兵；兵数＝min(可带兵数, 能出的兵)，再选评分最高的阵型和战法。只有五种攻城类型（8、9、10、11、22）的编成函数调用它（8 处）。AI 的 DLL 调试功能 scomplog 在这里挂内联钩子（开头 15 字节是三条 mov [rsp+x], reg，搬到跳板里），原函数算完后只记日志（改兵数的 siegecomp、siegesplit 已在 2026-11-16 删除）",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x70"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57 41 54 41 55 41 56 41 57 48 83 EC 20 41 0F B7 40 10 49 8B C8 8B 7C 24 70 49 8B F1 41 89 01 49 8B E8 8B 1D ?? ?? ?? ?? 4C 8B EA E8 ?? ?? ?? ?? 85 FF 75 07 3B C3 0F 4C C3",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "43750"
+        }
+      }
+    },
+    "person_stat_fn": {
+      "desc": "武将能力函数（231590）开头：rcx 武将、edx 能力序号（0 统率）、r8d 0xfff；基础值在武将 +0x124 起，再加道具等修正。原版攻城编成判断「统率 ≥ 60 才能带攻城兵器」就是这样调用的。AI 的 DLL 调试功能 scomplog 用它记武将的统率",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x124"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "89 54 24 10 55 56 57 41 54 41 55 41 56 41 57 48 83 EC 70 48 C7 44 24 20 FE FF FF FF 48 89 9C 24 C8 00 00 00 41 8B F8 48 63 F2 48 8B D9 4C 8B F6 0F B6 84 0E 24 01 00 00",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "231590"
+        }
+      }
+    },
+    "army_create_fn": {
+      "desc": "按出兵请求创建一支出征部队（1ed8e0）开头：rcx 出兵请求（+0x00 武将、+0x08 兵数、+0x0c 阵型），edx 1；DepartureNode 和五个攻城编成函数都调用它。开头 12 字节是 7 条 push。AI 的 DLL 功能 gate（守关）在这里挂内联钩子：守关的城迎击出兵时会雁行的武将改用雁行、其余不创建；调试功能 scomplog 开着时顺带记每支攻城部队",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0xa0"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 D9 48 81 EC A0 00 00 00 48 C7 45 C7 FE FF FF FF 48 89 9C 24 E8 00 00 00 44 8B F2 48 8B D9",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "1ed8e0"
+        }
+      }
+    },
+    "person_formation_fn": {
+      "desc": "武将能不能用某阵型（233ba0）：读武将 +0x164 的位掩码（第 n 位＝阵型 n），四夷另有限制。AI 的 DLL 功能 gate（守关）直接读这个掩码",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x164"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "45 33 C0 83 FA 14 77 28 8B 81 64 01 00 00 0F A3 D0 41 0F 92 C0",
+          "fields": {
+            "mask_off": {
+              "at": 10,
+              "kind": "u32",
+              "expect": "0x164"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "233ba0"
+        }
+      }
+    },
+    "area_bonus_fn": {
+      "desc": "府加成计算函数（2b2b30）开头：rcx 是格子对象，edx 是势力序号，r8 是 int*（写入所在区域和相邻区域里属于该势力的，各按涂色占比乘常数加起来的和），返回加成倍数（float）。AI 的 DLL 调试功能 bonus 每天调用它记录实际数值；找不到就不开这项调试",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0xdf30"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 53 55 41 56 48 83 EC 60 4D 8B F0 48 63 EA 48 8B D9 E8 ?? ?? ?? ?? 85 C0 75 11 F3 0F 10 05 ?? ?? ?? ?? 48 83 C4 60 41 5E 5D 5B C3 8D 45 FF 83 F8 32 77 E7 8D 45 D2 83 F8 04 76 DF 48 8B 05 ?? ?? ?? ?? 4C 89 6C 24 58 83 FD 33 7F 0A 4C 8B AC E8 30 DF 00 00",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "2b2b30"
+        }
+      }
+    },
+    "misclog_execute": {
+      "desc": "CMiscLogNode 执行函数开头（虚表第 16 项）：movsxd rax,[rdi+38h] 读第 1 个参数（类型，大于 12h 直接跳到结尾，所以 99 什么都不做），第 3 个参数（变量键）在它后面 8 字节",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "vslot": [
+          "misclog_vtable",
+          16
+        ]
+      },
+      "anchors": [
+        {
+          "vslot": [
+            ".?AVCMiscLogNode@@",
+            16
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 55 56 57 48 8B EC 48 83 EC 70 48 C7 45 ?? FE FF FF FF 48 89 9C 24 ?? ?? ?? ?? 48 8B F2 48 8B F9 E8 ?? ?? ?? ?? 48 63 47 ?? 83 7F ?? 00 0F 85 ?? ?? ?? ?? 83 F8 12 0F 87",
+          "fields": {
+            "type_off": {
+              "at": 41,
+              "kind": "u8",
+              "expect": "0x38"
+            },
+            "type_max": {
+              "at": 54,
+              "kind": "u8",
+              "expect": "0x12"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "84bb0"
+        }
+      }
+    },
+    "army_setters": {
+      "desc": "部队的设行动（2ecf80）和设目标（2ecfe0）两个函数：部队 +0x140 为 0 时才写，行动写 +0x37（0–17），目标类型写 +0x38、编号写 +0x3a。AI 的 DLL 照这个规则直接写，偏移从这里读；功能 gate（第五版）还在设目标函数开头（命中处 + 60，开头 15 字节是 3 条 mov/push/sub）挂内联钩子：守关的雁行被设了关外的目标时当场改成原地待命",
+      "features": [
+        "ai_dll"
+      ],
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x140"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "80 BF ?? ?? 00 00 00 75 ?? 85 DB 79 ?? 33 DB 88 5F ?? 48 8B 5C 24 30 48 83 C4 20 5F C3 B8 11 00 00 00 3B D8 0F 4F D8 88 5F ?? 48 8B 5C 24 30 48 83 C4 20 5F C3 ?? ?? ?? ?? ?? ?? ?? 48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 41 8B F8 8B F2 48 8B D9 E8 ?? ?? ?? ?? 85 C0 74 ?? 48 8B CB E8 ?? ?? ?? ?? 85 C0 74 ?? 80 BB ?? ?? 00 00 00 75 ?? 40 88 73 ?? 66 89 7B ??",
+          "fields": {
+            "lock_off": {
+              "at": 2,
+              "kind": "u32",
+              "expect": "0x140"
+            },
+            "action_off": {
+              "at": 17,
+              "kind": "u8",
+              "expect": "0x37"
+            },
+            "action_max": {
+              "at": 30,
+              "kind": "u8",
+              "expect": "0x11"
+            },
+            "lock_off2": {
+              "at": 106,
+              "kind": "u32",
+              "expect": "0x140"
+            },
+            "ttype_off": {
+              "at": 116,
+              "kind": "u8",
+              "expect": "0x38"
+            },
+            "tid_off": {
+              "at": 120,
+              "kind": "u8",
+              "expect": "0x3a"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "2ecfa4"
+        }
+      }
+    },
+    "army_strength_fn": {
+      "desc": "部队战力 b6a10（rcx 部队，返回 float：兵数 × 2aaff0 的战斗值 ÷ 常数）。树里部队属性 23、警戒军势属性 1、GetHexAroundFightingStrengthNode 求周围战力都调它。AI 的 DLL 功能 ford（渡江迎击）在开头挂内联钩子（开头 14 字节 5 条指令搬到跳板），只在树里 MiscLogNode(97)…(96) 之间、同一线程上，把在水面（地形 14、24）的部队的战力减半。",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x16"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 53 48 83 EC 20 45 33 C9 33 D2 48 8B D9 45 8D 41 01 E8 ?? ?? ?? ?? 0F B7 43 16 66 0F 6E 0D ?? ?? ?? ?? 0F 5B C9 66 0F 6E D0 0F 5B D2 F3 0F 59 D0 F3 0F 5E D1 0F 28 C2 48 83 C4 20 5B C3",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "b6a10"
+        }
+      }
+    },
+    "siege_launch_check": {
+      "desc": "攻城出兵节点（CCommandFootholdAttackDepatureNode 执行 2fb10）里凑兵结束后的判断，30ad5：凑到的战力 r14d < 目标 [rsp+0x74] 时，顶级难度打玩家照样出发；否则军团这一旬还有命令书（[r13+0x14] > 0）就撤回凑好的部队、返回 2，命令书用完（== 0）就 jbe 跳到 30b62 硬派出去。AI 的 DLL 功能 siegeenough 把这条 jbe（字段 jbe，2 字节 76 54）改成两个 nop：凑不够一律撤回。借鉴「三国志14优化伴侣」的 rollback 探针。",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x74"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "44 3B 74 24 74 0F 8D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B C8 E8 ?? ?? ?? ?? 83 F8 04 7C 15 49 8B 4F 60 E8 ?? ?? ?? ?? 48 8B C8 E8 ?? ?? ?? ?? 85 C0 75 5B 41 80 7D 14 00 76 54",
+          "fields": {
+            "jbe": {
+              "at": 55,
+              "kind": "u8",
+              "expect": "0x76"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "30ad5"
+        }
+      }
+    },
+    "departure_create_call": {
+      "desc": "出兵节点 CDepartureNode（执行 35770，军团树迎击出兵循环 [1789]、[1790] 等用它）调用「创建部队」1ed8e0 的地方，35eb7：rcx 出兵请求（+0x00 武将、+0x08 兵数、+0x0c 阵型）。字段 ret 是这次调用的返回地址（35ec7，紧跟 call 的 mov r15, rax）。1ed8e0 返回空时节点算失败，迎击循环接着看下一个人。AI 的 DLL 功能 gate 在创建部队钩子里按返回地址认出这条路：本方关正被攻、出兵城最近的敌军就是攻关的那支时，会雁行的改雁行（每座关最多 3 支），其余返回空不出城",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x60"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "BB 01 00 00 00 8B D3 48 8D 4D A7 E8 ?? ?? ?? ?? 4C 8B F8 49 8B CE E8 ?? ?? ?? ?? 48 8B C8 4D 8B C7 8B 56 60 E8",
+          "fields": {
+            "ret": {
+              "at": 16,
+              "kind": "u8",
+              "expect": "0x4c"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "35eb7"
+        }
+      }
+    },
+    "strength_around_vtable": {
+      "desc": "树节点 GetHexAroundFightingStrengthNode（某格周围 N 格内某势力部队的战力和兵数，逐支调部队战力 b6a10）的虚表。AI 的 DLL 只用它找第 16 项执行函数的开头，从那里取黑板读取的两个函数（见 strength_around_execute），不换虚表项",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "rtti": ".?AVCGetHexAroundFightingStrengthNode@@"
+      },
+      "slots": {
+        "execute": 16
+      },
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "13522a8",
+          "execute": "7e9f0"
+        }
+      }
+    },
+    "strength_around_execute": {
+      "desc": "GetHexAroundFightingStrengthNode 执行函数开头（虚表第 16 项）：rdx 树的执行上下文；先 113a3a0(上下文) 取黑板（mov rax,[rcx+18h]），再 b2ae60(黑板, 变量键, &对象, 0) 按第 1 个参数（+0x38）读出中心格对象，返回 al。字段 bb_get、bb_obj 是这两个函数。AI 的 DLL 功能 gate 在 MiscLogNode(95, 0, $部队) 里用它们读出撤退判断的本队（野战撤退模块把「敌方 8 格内战力」括在 MiscLogNode(95)…(94) 之间），括号内隔着关走不过来的敌军战力记 0",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "vslot": [
+          "strength_around_vtable",
+          16
+        ]
+      },
+      "anchors": [
+        {
+          "vslot": [
+            ".?AVCGetHexAroundFightingStrengthNode@@",
+            16
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "48 89 54 24 10 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 60 48 C7 45 ?? FE FF FF FF 48 89 9C 24 ?? ?? ?? ?? 0F 29 74 24 ?? 48 8B FA 4C 8B E9 33 F6 48 89 75 ?? 48 8B CA E8 ?? ?? ?? ?? 48 8B C8 45 33 C9 4C 8D 45 ?? 41 8B 55 38 E8 ?? ?? ?? ?? 84 C0",
+          "fields": {
+            "bb_get": {
+              "at": 59,
+              "kind": "rel",
+              "len": 5
+            },
+            "bb_obj": {
+              "at": 78,
+              "kind": "rel",
+              "len": 5
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "7e9f0",
+          "bb_get": "113a3a0",
+          "bb_obj": "b2ae60"
+        }
+      }
+    },
+    "foothold_strength_vtable": {
+      "desc": "树节点 GetFootholdFightingStrengthNode（某据点的战力：据点本身 bb980 加周围 N 格内部队 b6a10，第 4 个参数是扣掉的留守）的虚表。AI 的 DLL 只用它找第 16 项执行函数的开头，从那里取黑板读整数的函数（见 foothold_strength_execute），不换虚表项",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "rtti": ".?AVCGetFootholdFightingStrengthNode@@"
+      },
+      "slots": {
+        "execute": 16
+      },
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "13521e8",
+          "execute": "7e640"
+        }
+      }
+    },
+    "foothold_strength_execute": {
+      "desc": "GetFootholdFightingStrengthNode 执行函数开头（虚表第 16 项）：113a3a0(上下文) 取黑板，b2ae60(黑板, 键, &对象, 0) 读出据点（+0x38），再用 b2acf0(黑板, 键, &整数, 0) 读第 4 个参数（+0x44，留守）。字段 bb_int 是读整数的函数。AI 的 DLL 功能 siegefu 在 MiscLogNode(93, 0, $目标据点) 里用它读、用 foothold_strength_set 写攻城估算的敌方战力 $b57eaf65（乘上守方在目标城的府加成）",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "vslot": [
+          "foothold_strength_vtable",
+          16
+        ]
+      },
+      "anchors": [
+        {
+          "vslot": [
+            ".?AVCGetFootholdFightingStrengthNode@@",
+            16
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "48 8B C4 55 56 57 41 56 41 57 48 8D 68 A1 48 81 EC 90 00 00 00 48 C7 45 ?? FE FF FF FF 48 89 58 10 0F 29 70 C8 4C 8B FA 48 8B F1 33 DB 48 89 5D ?? 48 8B CA E8 ?? ?? ?? ?? 48 8B C8 45 33 C9 4C 8D 45 ?? 8B 56 38 E8 ?? ?? ?? ?? 84 C0 75 0A B8 02 00 00 00 E9 ?? ?? ?? ?? 48 8B 4D ?? E8 ?? ?? ?? ?? 85 C0 74 E9 89 5D 7F 49 8B CF E8 ?? ?? ?? ?? 48 8B C8 45 33 C9 4C 8D 45 7F 8B 56 44 E8 ?? ?? ?? ??",
+          "fields": {
+            "bb_get": {
+              "at": 52,
+              "kind": "rel",
+              "len": 5,
+              "same_as": "strength_around_execute.bb_get"
+            },
+            "bb_obj": {
+              "at": 70,
+              "kind": "rel",
+              "len": 5,
+              "same_as": "strength_around_execute.bb_obj"
+            },
+            "bb_int": {
+              "at": 126,
+              "kind": "rel",
+              "len": 5
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "7e640",
+          "bb_get": "113a3a0",
+          "bb_obj": "b2ae60",
+          "bb_int": "b2acf0"
+        }
+      }
+    },
+    "foothold_strength_set": {
+      "desc": "GetFootholdFightingStrengthNode 执行函数结尾（7e7fe）：cvttss2si 把战力转成整数，113a3a0(上下文) 取黑板，b2b380(黑板, 键, 整数) 写进第 2 个参数（+0x3c）。字段 bb_set 是写整数的函数（siegefu 用）",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "F3 0F 2C DE 49 8B CF E8 ?? ?? ?? ?? 48 8B C8 44 8B C3 8B 56 3C E8 ?? ?? ?? ?? F6 D8 1B C0 83 C0 02",
+          "fields": {
+            "bb_get": {
+              "at": 7,
+              "kind": "rel",
+              "len": 5,
+              "same_as": "strength_around_execute.bb_get"
+            },
+            "bb_set": {
+              "at": 21,
+              "kind": "rel",
+              "len": 5
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "7e7fe",
+          "bb_get": "113a3a0",
+          "bb_set": "b2b380"
+        }
+      }
+    },
+    "trap_trigger": {
+      "desc": "陷阱触发判定（18f7e0，CProgressState::Update 每天推进的一步，0x4500a4 调用）：逐个地图设施，mov rcx,r15（设施种类数据 CFacilityData）; call 191080 取「发动范围」; 2b0500(设施所在格, 范围, 收集器) 收集这么多格以内的部队，其中有敌方部队就调用 191d60 施加效果（之后 296b60 移除设施）。原版陷阱、猛火陷阱、落石的发动范围是 2，火陷阱、火船是 1，其他设施是 0。字段 act_range 是取发动范围的函数（功能 trap_near 挂它），collect 是按范围收集部队的函数",
+      "features": [
+        "trap_near"
+      ],
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "called_by": "progress_update"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "49 8B CF E8 ?? ?? ?? ?? 8B D0 4C 8D 44 24 70 48 8B CF E8 ?? ?? ?? ??",
+          "fields": {
+            "act_range": {
+              "at": 3,
+              "kind": "rel",
+              "len": 5,
+              "to": "text"
+            },
+            "collect": {
+              "at": 18,
+              "kind": "rel",
+              "len": 5,
+              "to": "text"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "18fa7a",
+          "act_range": "191080",
+          "collect": "2b0500"
+        }
+      }
+    },
+    "trap_act_range": {
+      "desc": "设施「发动范围」取值函数（191080）：rcx 是设施种类数据。种类数据里另存一份编码过的数值（+0x50 起的 19 项，防改内存），在就从编码副本 +0x44 解出来（循环左移 1 位再异或种类序号），不在就读原始字段 +0x40。只有陷阱触发判定（18f7e0 两处）和设施说明里显示「发动范围」的两个函数调用它，AI 不读。功能 trap_near 在开头挂内联钩子（开头 13 字节是 push rsi; sub rsp,20h; mov rax,[rcx+58h]; mov rsi,rcx，搬到跳板里）。效果范围是另一个取值函数（bae80，原始字段 +0x37，加政策的「陷阱影响范围」），不受影响",
+      "features": [
+        "trap_near"
+      ],
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "target": "trap_trigger.act_range"
+      },
+      "anchors": [
+        {
+          "func_of": "trap_trigger.act_range"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 56 48 83 EC 20 48 8B 41 58 48 8B F1 48 2B 41 50 48 83 E0 FC 48 83 F8 4C 75 ?? 48 89 5C 24 30 48 8B 19 48 89 7C 24 38 48 8B 79 50 E8 ?? ?? ?? ?? 0F B6 57 44 44 8B C8 41 B0 01 48 8B CE FF 53 48 48 8B 7C 24 38 48 8B 5C 24 30 0F B6 C0 48 83 C4 20 5E C3 0F B6 41 40 48 83 C4 20 5E C3",
+          "fields": {
+            "enc_off": {
+              "at": 52,
+              "kind": "u8",
+              "expect": "0x44"
+            },
+            "raw_off": {
+              "at": 87,
+              "kind": "u8",
+              "expect": "0x40"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "191080"
+        }
+      }
+    },
+    "trap_category": {
+      "desc": "设施效果函数 191d60 里的陷阱判断（191e49）：cmp byte ptr [r13+2Ch], 4，设施种类数据 +0x2c 是类别（1 城市关隘、2 军事设施、3 障碍物、4 陷阱，后者包括火陷阱、猛火陷阱、火船、陷阱、落石），是陷阱就先查「陷阱解除」。功能 trap_near 从这里读类别的偏移和陷阱的类别值",
+      "features": [
+        "trap_near"
+      ],
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "called_by": "trap_trigger"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "41 80 7D 2C 04 75 ?? 4C 8D 45 E0 49 8B D4 49 8B CF E8 ?? ?? ?? ??",
+          "fields": {
+            "cat_off": {
+              "at": 3,
+              "kind": "u8",
+              "expect": "0x2c",
+              "soft": true
+            },
+            "cat_trap": {
+              "at": 4,
+              "kind": "u8",
+              "expect": "0x04",
+              "soft": true
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "191e49"
+        }
+      }
+    },
+    "trap_fire_call": {
+      "desc": "陷阱触发判定（18f7e0）里找到敌军后的那一步（18fdcd）：mov rdx,r12（地图设施对象 CObjectData：+0x10 格、+0x12 设施种类、+0x13 所属势力）; call 191d60 施加效果。字段 effect_fn 是效果函数；只有 trap_near 的调试日志（SAN14_TRAP_LOG=1）用它记每次触发时敌军离陷阱几格",
+      "features": [
+        "trap_near"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "func_of": "trap_trigger"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "49 8B D4 4C 8B 75 ?? 49 8B CE E8 ?? ?? ?? ?? 8B F0 85 C0 74 ?? E8 ?? ?? ?? ?? 0F 28 DE 0F 28 D7 49 8B D4 B9 2F 00 00 00",
+          "fields": {
+            "effect_fn": {
+              "at": 10,
+              "kind": "rel",
+              "len": 5,
+              "to": "text"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "18fdcd",
+          "effect_fn": "191d60"
+        }
+      }
+    },
+    "trap_effect_fn": {
+      "desc": "设施效果函数 191d60 开头：rcx 设施管理器，rdx 地图设施对象。常驻设施（军乐台、箭楼等，18f620 每天）和触发的陷阱（18f7e0）都走它。trap_near 的调试日志在这里挂内联钩子（开头 12 字节是 7 个 push，搬到跳板里），只记类别 4 的设施",
+      "features": [
+        "trap_near"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "target": "trap_fire_call.effect_fn"
+      },
+      "anchors": [
+        {
+          "func_of": "trap_fire_call.effect_fn"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 81 EC 80 00 00 00 48 C7 45 ?? FE FF FF FF 48 89 9C 24 ?? ?? ?? ?? 4C 8B E2 4C 8B F9 48 8B CA E8 ?? ?? ?? ?? 85 C0 0F 84",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "191d60"
+        }
+      }
+    },
+    "unit_base_fn": {
+      "desc": "部队的战斗基数（2aaff0）开头：rcx 部队，edx 0，r8d 1，r9d 府加成开关（1 算），返回 float。面板攻军、防御等都是它乘阵型的数值（2b4500、2ac140）；战斗预估（918460）这样调用。AI 的 DLL 功能 navaldef（水战守港）用它和下面两个函数，按游戏自己的数值比较水上、岸上、上岸后三种打法",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0xd0"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "48 8B C4 44 89 48 20 44 89 40 18 55 56 57 41 54 41 55 41 56 41 57 48 81 EC D0 00 00 00 48 C7 44 24 40 FE FF FF FF 48 89 58 08 0F 29 70 B8 0F 29 78 A8 44 0F 29 40 98 44 0F 29 48 88 44 0F 29 90 78 FF FF FF 44 0F 29 5C 24 70 44 0F 29 64 24 60 44 0F 29 6C 24 50 48 8B DA 48 8B F1 E8",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "2aaff0"
+        }
+      }
+    },
+    "unit_attack_fn": {
+      "desc": "部队攻军（2b4500）开头：xmm0 战斗基数（2aaff0），rdx 部队，r8 对手（可为空，同势力返回 0），r9 阵型对象（数据根 +0x77428 + 编号 × 8，取 +0x83 攻击字节），栈上两个 int（预估传 0、0）；返回 float，就是部队面板的攻军。伤害函数 16afd0 用它和防御算「1000 + 攻军 − 防御」",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x288"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 53 56 57 41 56 48 81 EC 88 02 00 00 44 0F 29 8C 24 40 02 00 00 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 30 02 00 00 48 8B CA 49 8B F9 49 8B F0 48 8B DA 44 0F 28 C8 E8",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "2b4500"
+        }
+      }
+    },
+    "unit_defense_fn": {
+      "desc": "部队防御（2ac140）开头：参数同攻军（2b4500），取阵型 +0x86 防御字节；返回 float，就是部队面板的防御",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x2b0"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "40 55 57 41 54 41 56 41 57 48 81 EC B0 02 00 00 44 0F 29 9C 24 40 02 00 00 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 30 02 00 00 48 8B CA 49 8B E9 4D 8B F0 48 8B FA 44 0F 28 D8 E8",
+          "fields": {}
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "2ac140"
+        }
+      }
+    },
+    "damage_c1": {
+      "desc": "伤害函数 16afd0 里的「d = 常数 + 攻军 − 防御」（16b275：movd xmm0,[常数]; cvtdq2ps; addss 攻军; subss 防御），常数 1.0.2.58226 是 1000；之后 d 不到 1 按 1，平方除以 2000（同样在 .data），乘（两边兵数和 ÷ 300 + 300）÷ 1500。navaldef 读这个常数算单次交换比",
+      "features": [
+        "ai_dll"
+      ],
+      "optional": true,
+      "users": [
+        "aihook/san14_ai.cpp"
+      ],
+      "where": {
+        "scan": "text"
+      },
+      "count": 1,
+      "anchors": [
+        {
+          "const": "0x3f800000"
+        }
+      ],
+      "variants": [
+        {
+          "versions": [
+            "1.0.2.58226"
+          ],
+          "pattern": "66 0F 6E 05 ?? ?? ?? ?? 0F 5B C0 F3 0F 58 C6 F3 0F 5C 45 77 F3 0F 11 45 9F C7 45 8F 00 00 80 3F",
+          "fields": {
+            "c1": {
+              "at": 0,
+              "kind": "rel",
+              "len": 8,
+              "to": "data"
+            }
+          }
+        }
+      ],
+      "rva": {
+        "1.0.2.58226": {
+          "hit": "16b275",
+          "c1": "1a4d990"
+        }
+      }
+    }
+  }
+}

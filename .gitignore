@@ -1,0 +1,24 @@
+# memory dumps of the game (tens of MB, regenerated with tools/dump.py)
+analysis/dump_*/
+# analysis run data: samples, watch logs
+analysis/*.json
+analysis/*.log
+analysis/*.out
+# run-time logs and saved original bytes
+logs/
+# release build output and launcher build intermediates
+dist/
+launcher/build/
+__pycache__/
+*.pyc
+# behavior-tree dumps and observation runs (derived from game data)
+ai/out/
+ai/runs/
+ai/build/
+analysis/saves/
+analysis/dist_backup/
+analysis/shots/
+# map and terrain tables extracted from the game for research (derived from game data)
+ai/research/*.bin
+# disassembly listings and scan output of the game exe (the game's code: kept locally, not published)
+analysis/*.txt

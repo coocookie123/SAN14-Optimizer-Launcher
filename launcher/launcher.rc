@@ -1,0 +1,36 @@
+#pragma code_page(65001)
+#include <winres.h>
+#include "build/version.h"
+
+1 ICON "launcher.ico"
+1 RT_MANIFEST "launcher.manifest"
+
+// VER_NUM (e.g. 0,7,0,0) and VER_STR (e.g. "0.7.0"): build/version.h, written by build.py from tools/report_button.py VERSION
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION VER_NUM
+ PRODUCTVERSION VER_NUM
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "W"
+            VALUE "FileDescription", "三国志14 优化启动器"
+            VALUE "FileVersion", VER_STR
+            VALUE "InternalName", "W_San14Launcher"
+            VALUE "OriginalFilename", "[W]三国志14优化启动器.exe"
+            VALUE "ProductName", "[W]三国志14优化启动器"
+            VALUE "ProductVersion", VER_STR
+            VALUE "Comments", "三国志14 威力加强传承版的优化启动器：跳过回合报告、回看报告、府加成、看海接管、陷阱近身触发、电脑 AI 改进，可一起加载人力资源管理器。只在游戏运行时改内存，不修改游戏文件。"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END

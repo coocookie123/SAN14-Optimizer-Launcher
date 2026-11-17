@@ -1,0 +1,52 @@
+{
+  "id": "exp",
+  "name": "会战机制实验（只用于测试）",
+  "description": "验证三个机制，不是正式模块。对进攻、迎击、攻击部队的军势，以本队为中心：A 敌军在 6 格内但 2 格内没有时，全军原地待命（部队行动 13）；B 敌军进入 2 格内时，锋矢以敌方雁行或攻城兵器为目标（没有就打最近的敌军），其他部队以最近的敌军为目标；C 雁行（不是本队时）以本队所在格为目标，跟在后面。A、B 触发的那一天跳过原版的进攻和迎击逻辑，好让设定不被覆盖。统计用 research/exp_engage.py。",
+  "priority": 40,
+  "ops": [
+    {
+      "op": "insert",
+      "at": {"tree": 2, "index": 1, "type": "SEQ"},
+      "pos": 3,
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.exp.skip, 0)",
+        "  IF ANY{C28($88dbc001, 1), C28($88dbc001, 12), C28($88dbc001, 2), C28($88dbc001, 8), C28($88dbc001, 9), C28($88dbc001, 10), C28($88dbc001, 22), C28($88dbc001, 3), C28($88dbc001, 13), C28($88dbc001, 14), C28($88dbc001, 15), C28($88dbc001, 16), C28($88dbc001, 21)}",
+        "    SEQ(0, 1, 1)",
+        "      VariableGetTroopsInfoNode($88dbc001, 2, $m.exp.lead)",
+        "      VariableGetTroopsInfoNode($88dbc001, 3, $m.exp.list)",
+        "      GetArroundEnemyListNode($m.exp.lead, 2, $m.exp.near)",
+        "      VariableGetListLengthNode(3, $m.exp.near, $m.exp.nnear)",
+        "      GetArroundEnemyListNode($m.exp.lead, 6, $m.exp.far)",
+        "      VariableGetListLengthNode(3, $m.exp.far, $m.exp.nfar)",
+        "      VariableGetArmyInfoNode($m.exp.lead, 6, $m.exp.hex)",
+        "      VariableCreateNode($m.exp.zero, 0)",
+        "      SEQ(0, 2, 1)",
+        "        IF ALL{$m.exp.nfar > 0, NOT $m.exp.nnear > 0}",
+        "          SEQ(0, 2, 1)",
+        "            VariableCreateNode($m.exp.skip, 1)",
+        "            LoopListElementNode(2, 2, $m.exp.list, $m.exp.army)",
+        "              ArmySetArmyActionNode($m.exp.army, 13)",
+        "        IF $m.exp.nnear > 0",
+        "          SEQ(0, 2, 1)",
+        "            VariableCreateNode($m.exp.skip, 1)",
+        "            ListGetItemByIndex(3, $m.exp.near, $m.exp.zero, $m.exp.front)",
+        "            VariableSetVariableSpecifiedTypeNode(3, $m.exp.weak, $m.exp.front)",
+        "            LoopListElementNode(2, 2, $m.exp.far, $m.exp.foe)",
+        "              IF ANY{C129($m.exp.foe, 3), C129($m.exp.foe, 8), C129($m.exp.foe, 9), C129($m.exp.foe, 10)}",
+        "                VariableSetVariableSpecifiedTypeNode(3, $m.exp.weak, $m.exp.foe)",
+        "            LoopListElementNode(2, 2, $m.exp.list, $m.exp.army)",
+        "              SEQ(0, 0, 1)",
+        "                IF ALL{C129($m.exp.army, 3), NOT C23($m.exp.army, $m.exp.lead)}",
+        "                  ArmySetTargetArmyNode($m.exp.army, $m.exp.hex)",
+        "                IF C129($m.exp.army, 2)",
+        "                  ArmySetTargetArmyNode($m.exp.army, $m.exp.weak)",
+        "                ArmySetTargetArmyNode($m.exp.army, $m.exp.front)"
+      ]
+    },
+    {"op": "wrap", "at": {"tree": 2, "find": "IF ANY{C28:部队任务($88dbc001, 2), "}, "src": "IF NOT $m.exp.skip >= 1"},
+    {"op": "wrap", "at": {"tree": 2, "find": "IF ANY{C28:部队任务($88dbc001, 3), "}, "src": "IF NOT $m.exp.skip >= 1"},
+    {"op": "wrap", "at": {"tree": 2, "find": "re:^IF C28:部队任务\\(\\$88dbc001, 12\\)$"}, "src": "IF NOT $m.exp.skip >= 1"},
+    {"op": "wrap", "at": {"tree": 2, "find": "re:^IF C28:部队任务\\(\\$88dbc001, 1\\)$"}, "src": "IF NOT $m.exp.skip >= 1"}
+  ]
+}

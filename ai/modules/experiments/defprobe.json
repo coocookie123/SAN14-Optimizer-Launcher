@@ -1,0 +1,129 @@
+{
+  "id": "dp",
+  "name": "守城迎击探针（只计数）",
+  "description": "调试用（2026-11-12）：不改行为，只在军团树迎击段数一数「主将离目标城 3 格内的警戒军势」（已在城下围城的敌军）走到哪一步被筛掉。z：进入警戒军势循环；a/b：两种兵力扣减之后（[1372]、[1384]，剩余 > 500 / > 0 才进迎击名单）；d：目标城本身作为出兵城时，可动用兵力（属性 11 扣 5000 或 2000）> 0，不被 C132 挡；c：逐座出兵城比战力（[1584]），self 是目标城本身、other 是别的城。结果用 research/probe_log.py 看。 e：[1445] 前，顶级难度下敌方势力实力超过我方 3 倍、君主野心不到 20 时 $65e78464=1，这一轮不迎击（weak）；f：[1460] 前，C8(5, 目标据点)。",
+  "priority": 0,
+  "dll": [
+    "probe"
+  ],
+  "ops": [
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1337,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableGetDistanceNode(3, $06dc5c3d, 5, $006ce4f7, $m.dp.dz)",
+        "  IF NOT $m.dp.dz > 3",
+        "    MiscLogNode(99, 0, $m.dp.p_z_near)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 1372,
+        "type": "VariableMinusVariableNode"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableGetDistanceNode(3, $1d3eb5bb, 5, $006ce4f7, $m.dp.d)",
+        "  IF NOT $m.dp.d > 3",
+        "    MiscLogNode(99, 0, $m.dp.p_a_near)",
+        "  IF ALL{NOT $m.dp.d > 3, $12f896f5 > 500}",
+        "    MiscLogNode(99, 0, $m.dp.p_a_pass)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 1384,
+        "type": "VariableMinusVariableNode"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableGetDistanceNode(3, $1d3eb5bb, 5, $006ce4f7, $m.dp.d)",
+        "  IF NOT $m.dp.d > 3",
+        "    MiscLogNode(99, 0, $m.dp.p_b_near)",
+        "  IF ALL{NOT $m.dp.d > 3, $12f896f5 > 0}",
+        "    MiscLogNode(99, 0, $m.dp.p_b_pass)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1469,
+        "type": "IF"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableGetDistanceNode(3, $7e37613c, 5, $ddd0733e, $m.dp.d)",
+        "  IF NOT $m.dp.d > 3",
+        "    MiscLogNode(99, 0, $m.dp.p_d_near)",
+        "  IF ALL{NOT $m.dp.d > 3, $d9fc265e > 0}",
+        "    MiscLogNode(99, 0, $m.dp.p_d_avail)",
+        "  IF ALL{NOT $m.dp.d > 3, $d9fc265e > 0, NOT C132(5, $ddd0733e, 3, $7e37613c, $b2020915)}",
+        "    MiscLogNode(99, 0, $m.dp.p_d_ok)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1592,
+        "type": "IF"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableGetDistanceNode(3, $3894c41c, 5, $006ce4f7, $m.dp.d)",
+        "  IF ALL{NOT $m.dp.d > 3, C23($659cc10d, $006ce4f7)}",
+        "    MiscLogNode(99, 0, $m.dp.p_c_self)",
+        "  IF ALL{NOT $m.dp.d > 3, C23($659cc10d, $006ce4f7), NOT $932ec6a5 >= 1}",
+        "    MiscLogNode(99, 0, $m.dp.p_c_self_ok)",
+        "  IF ALL{NOT $m.dp.d > 3, NOT C23($659cc10d, $006ce4f7)}",
+        "    MiscLogNode(99, 0, $m.dp.p_c_other)",
+        "  IF ALL{NOT $m.dp.d > 3, NOT C23($659cc10d, $006ce4f7), NOT $932ec6a5 >= 1}",
+        "    MiscLogNode(99, 0, $m.dp.p_c_other_ok)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1445,
+        "type": "IF"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableGetDistanceNode(3, $3894c41c, 5, $006ce4f7, $m.dp.d)",
+        "  IF NOT $m.dp.d > 3",
+        "    MiscLogNode(99, 0, $m.dp.p_e_near)",
+        "  IF ALL{NOT $m.dp.d > 3, $65e78464 > 0}",
+        "    MiscLogNode(99, 0, $m.dp.p_e_weak)",
+        "  IF ALL{NOT $m.dp.d > 3, NOT $65e78464 > 0, $01dfc17d > 0}",
+        "    MiscLogNode(99, 0, $m.dp.p_e_go)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1460,
+        "type": "IF"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableGetDistanceNode(3, $7e37613c, 5, $ddd0733e, $m.dp.d)",
+        "  IF NOT $m.dp.d > 3",
+        "    MiscLogNode(99, 0, $m.dp.p_f_near)",
+        "  IF ALL{NOT $m.dp.d > 3, C8(5, $ddd0733e)}",
+        "    MiscLogNode(99, 0, $m.dp.p_f_c8)"
+      ]
+    }
+  ]
+}

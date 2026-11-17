@@ -1,0 +1,252 @@
+{
+  "id": "siegeplan",
+  "name": "攻城评估",
+  "description": "第二版，2026-11-14 用户定进默认（「改门槛」，A/B 两轮后「进默认」；第一版在 archive/siegeplan_v1.json）。留守线和追加出兵城照第一版：只在调用攻城出兵节点（任务 8–11 那组 [2098] 和任务 22 [2202]）前把留守线 $9f3e3992 乘 60%，调完改回；任务 8–11 那组往出兵城列表末尾追加稍远的自家城（路程放宽到 20000）。改了出兵门槛（「打不打、什么时候打」，用户同意的例外）：① 邻城援军：判断要不要出兵（[2077] 前，加进门槛 $19fcd973）和调用出兵节点前（加进凑兵目标 $b57eaf65）加上目标城相邻据点里同属守方的城（C23 比势力、资金属性 34 > 0）的（兵 − 5000），权重按实测（research/relief_cal.py：实际赶来的比例 13–18 格 0.8–1.4、19–30 格约 0.5、31–45 格约 0.1；第一版照优化伴侣用 0.35 / 0.2 / 0.15，每次攻城预估援军约 1000、实际约 5000）改成 18 格内 0.8、30 格内 0.5、45 格内 0.1，合计封顶 45000。② 府加成：原版算目标城战力（GetFootholdFightingStrengthNode，exe 7e640）不含府加成；算完（和都督好战调整）后放 MiscLogNode(93, 0, $目标)，DLL 功能 siegefu 用游戏自己的府加成函数（2b2b30）在城周 1–3 格算守方和攻方的倍数，按攻城时实测折算（守方 1 + 0.77 ×（现值 − 1），攻城时攻方一路涂色，守方府分只剩出发时的 0.77；攻方至少 1 + 0.2 ×（守方现值 − 1），攻城时攻方府分约 1），敌方战力乘「守方 ÷ 攻方」（限 0.75–1.6，实际中位 ×1.26），门槛（× 2.1）和凑兵目标（× 2.6）都跟着变。主攻城（[1990]）和增援攻城（任务 22，[2133]）两处。只动电脑势力。A/B（BEHAVIOR_PLAN 第四十三节）：奇数方开（runs/20261114-165707、170620、171459），和对照同一方比攻城 26 对 46 次、拿下 11 对 10、每次出发 40310 对 31615 兵、到城下折府后兵力比中位 1.88 对 0.85、攻城部队溃灭 45% 对 66%；换边（172650、173555、174530）偶数方本来打得谨慎，攻城 20 对 23、拿下 3 对 2、溃灭 60% 对 60%。异常扫描没有和它有关的「要查」。和第一版对照做 A/B：--ab odd:siegeplan 配 experiments/siegeplane.json（或 even 配 siegeplano.json）。2026-11-14 夜用户定把「攻城准备第一层：城外集结、先占府」也放进来（BEHAVIOR_PLAN 第四十六节）：再开 DLL 功能 fu（占府，含攻城部队顺路踩 3 格内没人守的敌方府）和 siegeprep：攻城军势（目标是城）走到离城 7–10 格、身边没有敌军时主力原地停下，从同一座城的攻城集团里挑兵少、离得近的近战部队（最远 12 格，集团至少留一半兵）去踩城周 3 格受影响最多、没人守的敌方府；主力等到派出的部队回来、刚踩下的府过了 10 天（下一旬开头才易主）、同一座城还在路上的自家军势到了，最多 15 天，再照原命令攻城；贴着敌军的部队不扣，不撤。A/B 两轮（奇数方开 runs/20261114-215711、220621、223101；换边 224028、224927、225816）：攻城交战在持平或领先府分处 32% 对 19%、18% 对 13%，攻城部队接战后溃灭 48% 对 60%、68% 对 73%，拿下 11 对 10、2 对 0，攻城交换比 0.60 对 0.41、0.34 对 0.34。2026-11-15 用户定把「攻城准备第二层：防断粮」也放进来（DLL 功能 supplyguard，细节见 experiments/supplyguard.json）：每天给离目标城 14 格内的攻城军势找回自家府区域的粮道，粮道身后有交战中的敌军靠近（或已经断了）时，派集团里离得近、兵够 1.2 倍的近战部队去打它，敌兵达到集团一半就附近没在交战的部队一起打（野战）；粮道经过的没人守的敌方府派近处快的近战部队去踩掉，免得府自己把粮道涂回去；护粮和踩府的兵合计不超过集团一半。A/B 两轮（奇数方开 runs/20261115-002034、025203、030155；换边 031032、031937、032835），开对不开：城下断粮 0.9% 对 2.1%，攻城拿下 20% 对 17%，攻城部队溃灭 51% 对 59%，攻城交换比奇数方 0.76 对 0.44、偶数方 0.38 对 0.41。 2026-11-16 用户定（「行为生效，看起来是真人，结果只要不变的更坏」就可以开，BEHAVIOR_PLAN 第五十节）并进「攻城凑够才出」（DLL 功能 siegeenough，原 experiments/siegeenough.json）：原版攻城出兵节点凑完兵后战力不够目标时，军团这一旬还有命令书就撤回、这次不出，命令书用完了就硬派出去；现在命令书用完了也撤回，等下一旬兵够了再打（顶级难度打玩家照样出发那一条不动）。改的是游戏的公共代码，对所有电脑势力生效，不能同局 A/B。2026-11-13 在旧门槛下试过，很少触发；现在凑兵目标按邻城援军和府加成抬高了，触发会变多，新门槛下还没测过，可能让电脑之间的攻城变少，回归时看攻城次数。",
+  "priority": 0,
+  "dll": [
+    "siegefu",
+    "fu",
+    "siegeprep",
+    "supplyguard",
+    "siegeenough"
+  ],
+  "ops": [
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1956,
+        "type": "SEQ"
+      },
+      "src": [
+        "VariableCreateNode($m.siegeplan.keep, 0)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2015,
+        "type": "GetFootholdFightingStrengthNode"
+      },
+      "src": [
+        "IF $m.siegeplan.keep > 0",
+        "  SEQ(0, 2, 1)",
+        "    VariableCreateNode($9f3e3992, 0)",
+        "    VariablePlusVariableNode($9f3e3992, $m.siegeplan.keep)",
+        "    VariableCreateNode($m.siegeplan.keep, 0)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2188,
+        "type": "GetFootholdFightingStrengthNode"
+      },
+      "src": [
+        "IF $m.siegeplan.keep > 0",
+        "  SEQ(0, 2, 1)",
+        "    VariableCreateNode($9f3e3992, 0)",
+        "    VariablePlusVariableNode($9f3e3992, $m.siegeplan.keep)",
+        "    VariableCreateNode($m.siegeplan.keep, 0)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2098,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.siegeplan.keep, 0)",
+        "  VariablePlusVariableNode($m.siegeplan.keep, $9f3e3992)",
+        "  VariableMultiValueNode($9f3e3992, 60)",
+        "  VariableDivideValueNode($9f3e3992, 100)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 2098,
+        "type": "SEQ"
+      },
+      "src": [
+        "IF $m.siegeplan.keep > 0",
+        "  SEQ(0, 2, 1)",
+        "    VariableCreateNode($9f3e3992, 0)",
+        "    VariablePlusVariableNode($9f3e3992, $m.siegeplan.keep)",
+        "    VariableCreateNode($m.siegeplan.keep, 0)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2202,
+        "type": "CommandFootholdAttackDepatureNode"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.siegeplan.keep, 0)",
+        "  VariablePlusVariableNode($m.siegeplan.keep, $9f3e3992)",
+        "  VariableMultiValueNode($9f3e3992, 60)",
+        "  VariableDivideValueNode($9f3e3992, 100)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 2202,
+        "type": "CommandFootholdAttackDepatureNode"
+      },
+      "src": [
+        "IF $m.siegeplan.keep > 0",
+        "  SEQ(0, 2, 1)",
+        "    VariableCreateNode($9f3e3992, 0)",
+        "    VariablePlusVariableNode($9f3e3992, $m.siegeplan.keep)",
+        "    VariableCreateNode($m.siegeplan.keep, 0)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2077,
+        "type": "IF"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.siegeplan.sumd, 0)",
+        "  VariableGetFootholdInfoNode($ad8610fe, 3, $m.siegeplan.tfd)",
+        "  VariableGetFootholdInfoNode($ad8610fe, 26, $m.siegeplan.nbd)",
+        "  LoopListElementNode(2, 10, $m.siegeplan.nbd, $m.siegeplan.cd)",
+        "    VariableGetFootholdInfoNode($m.siegeplan.cd, 3, $m.siegeplan.cfd)",
+        "    VariableGetFootholdInfoNode($m.siegeplan.cd, 34, $m.siegeplan.moneyd)",
+        "    IF ALL{C23($m.siegeplan.cfd, $m.siegeplan.tfd), $m.siegeplan.moneyd > 0}",
+        "      SEQ(0, 1, 1)",
+        "        VariableGetFootholdInfoNode($m.siegeplan.cd, 36, $m.siegeplan.sd)",
+        "        VariableMinusValueNode($m.siegeplan.sd, 5000)",
+        "        IF $m.siegeplan.sd > 0",
+        "          SEQ(0, 2, 1)",
+        "            VariableGetDistanceNode(5, $m.siegeplan.cd, 5, $ad8610fe, $m.siegeplan.dd)",
+        "            SEQ(0, 0, 1)",
+        "              IF NOT $m.siegeplan.dd > 18",
+        "                VariableMultiValueNode($m.siegeplan.sd, 80)",
+        "              IF NOT $m.siegeplan.dd > 30",
+        "                VariableMultiValueNode($m.siegeplan.sd, 50)",
+        "              IF NOT $m.siegeplan.dd > 45",
+        "                VariableMultiValueNode($m.siegeplan.sd, 10)",
+        "              VariableCreateNode($m.siegeplan.sd, 0)",
+        "            VariableDivideValueNode($m.siegeplan.sd, 100)",
+        "            VariablePlusVariableNode($m.siegeplan.sumd, $m.siegeplan.sd)",
+        "  VariableMinValueNode($m.siegeplan.sumd, 45000)",
+        "  VariablePlusVariableNode($19fcd973, $m.siegeplan.sumd)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2098,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.siegeplan.suma, 0)",
+        "  VariableGetFootholdInfoNode($ad8610fe, 3, $m.siegeplan.tfa)",
+        "  VariableGetFootholdInfoNode($ad8610fe, 26, $m.siegeplan.nba)",
+        "  LoopListElementNode(2, 10, $m.siegeplan.nba, $m.siegeplan.ca)",
+        "    VariableGetFootholdInfoNode($m.siegeplan.ca, 3, $m.siegeplan.cfa)",
+        "    VariableGetFootholdInfoNode($m.siegeplan.ca, 34, $m.siegeplan.moneya)",
+        "    IF ALL{C23($m.siegeplan.cfa, $m.siegeplan.tfa), $m.siegeplan.moneya > 0}",
+        "      SEQ(0, 1, 1)",
+        "        VariableGetFootholdInfoNode($m.siegeplan.ca, 36, $m.siegeplan.sa)",
+        "        VariableMinusValueNode($m.siegeplan.sa, 5000)",
+        "        IF $m.siegeplan.sa > 0",
+        "          SEQ(0, 2, 1)",
+        "            VariableGetDistanceNode(5, $m.siegeplan.ca, 5, $ad8610fe, $m.siegeplan.da)",
+        "            SEQ(0, 0, 1)",
+        "              IF NOT $m.siegeplan.da > 18",
+        "                VariableMultiValueNode($m.siegeplan.sa, 80)",
+        "              IF NOT $m.siegeplan.da > 30",
+        "                VariableMultiValueNode($m.siegeplan.sa, 50)",
+        "              IF NOT $m.siegeplan.da > 45",
+        "                VariableMultiValueNode($m.siegeplan.sa, 10)",
+        "              VariableCreateNode($m.siegeplan.sa, 0)",
+        "            VariableDivideValueNode($m.siegeplan.sa, 100)",
+        "            VariablePlusVariableNode($m.siegeplan.suma, $m.siegeplan.sa)",
+        "  VariableMinValueNode($m.siegeplan.suma, 45000)",
+        "  VariablePlusVariableNode($b57eaf65, $m.siegeplan.suma)",
+        "  LoopListElementNode(2, 10, $5480bf39, $m.siegeplan.x)",
+        "    VariableGetFootholdInfoNode($m.siegeplan.x, 3, $m.siegeplan.xf)",
+        "    VariableGetFootholdInfoNode($m.siegeplan.x, 10, $m.siegeplan.food)",
+        "    VariableGetFootholdInfoNode($m.siegeplan.x, 22, $m.siegeplan.mor)",
+        "    IF ALL{C8(5, $m.siegeplan.x), $m.siegeplan.mor > 49, NOT C24(5, $m.siegeplan.x, $ceb8be84), $m.siegeplan.food > $633d2ff2, NOT C24(5, $m.siegeplan.x, $3eef1f81), NOT C24(5, $m.siegeplan.x, $6f2dd216), C43(5, $ad8610fe, 5, $m.siegeplan.x, 20000), NOT C130(5, $m.siegeplan.x, 5, $ad8610fe, $m.siegeplan.xf)}",
+        "      ListAddFootholdUniqueNode($m.siegeplan.x, $3eef1f81)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2202,
+        "type": "CommandFootholdAttackDepatureNode"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.siegeplan.sumb, 0)",
+        "  VariableGetFootholdInfoNode($54eea2d9, 3, $m.siegeplan.tfb)",
+        "  VariableGetFootholdInfoNode($54eea2d9, 26, $m.siegeplan.nbb)",
+        "  LoopListElementNode(2, 10, $m.siegeplan.nbb, $m.siegeplan.cb)",
+        "    VariableGetFootholdInfoNode($m.siegeplan.cb, 3, $m.siegeplan.cfb)",
+        "    VariableGetFootholdInfoNode($m.siegeplan.cb, 34, $m.siegeplan.moneyb)",
+        "    IF ALL{C23($m.siegeplan.cfb, $m.siegeplan.tfb), $m.siegeplan.moneyb > 0}",
+        "      SEQ(0, 1, 1)",
+        "        VariableGetFootholdInfoNode($m.siegeplan.cb, 36, $m.siegeplan.sb)",
+        "        VariableMinusValueNode($m.siegeplan.sb, 5000)",
+        "        IF $m.siegeplan.sb > 0",
+        "          SEQ(0, 2, 1)",
+        "            VariableGetDistanceNode(5, $m.siegeplan.cb, 5, $54eea2d9, $m.siegeplan.db)",
+        "            SEQ(0, 0, 1)",
+        "              IF NOT $m.siegeplan.db > 18",
+        "                VariableMultiValueNode($m.siegeplan.sb, 80)",
+        "              IF NOT $m.siegeplan.db > 30",
+        "                VariableMultiValueNode($m.siegeplan.sb, 50)",
+        "              IF NOT $m.siegeplan.db > 45",
+        "                VariableMultiValueNode($m.siegeplan.sb, 10)",
+        "              VariableCreateNode($m.siegeplan.sb, 0)",
+        "            VariableDivideValueNode($m.siegeplan.sb, 100)",
+        "            VariablePlusVariableNode($m.siegeplan.sumb, $m.siegeplan.sb)",
+        "  VariableMinValueNode($m.siegeplan.sumb, 45000)",
+        "  VariablePlusVariableNode($b57eaf65, $m.siegeplan.sumb)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 1991,
+        "type": "CallScriptNode"
+      },
+      "src": [
+        "MiscLogNode(93, 0, $ad8610fe)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 2134,
+        "type": "CallScriptNode"
+      },
+      "src": [
+        "MiscLogNode(93, 0, $54eea2d9)"
+      ]
+    }
+  ]
+}

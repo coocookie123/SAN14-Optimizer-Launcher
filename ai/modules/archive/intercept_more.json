@@ -1,0 +1,25 @@
+{
+  "id": "intercept_more",
+  "name": "迎击多派兵",
+  "description": "电脑迎击来犯的敌方军势时，原版先算出敌方附近的战力作为「需要的战力」，再逐支派兵、每派一支扣掉它的战力，扣完就停，所以常常只派一支。本模块在派兵前把需要的战力乘 1.5；敌方军势有两支以上部队时再乘 4/3（合计 2 倍）。结果是：单支部队要比敌方强得多才会单独出去，否则会再从别处派兵凑够。玩家委任的军团也走这段逻辑，同样生效。",
+  "priority": 60,
+  "ops": [
+    {
+      "op": "after",
+      "at": {"tree": 1, "find": "re:^IF NOT \\$65e78464 > 0$", "count": 3},
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableGetCautionTroopsInfoNode($c47f08f2, 2, $m.intercept_more.list)",
+        "  VariableGetListLengthNode(3, $m.intercept_more.list, $m.intercept_more.n)",
+        "  IF $01dfc17d > 0",
+        "    SEQ(0, 2, 1)",
+        "      VariableMultiValueNode($01dfc17d, 15)",
+        "      VariableDivideValueNode($01dfc17d, 10)",
+        "  IF ALL{$01dfc17d > 0, $m.intercept_more.n >= 2}",
+        "    SEQ(0, 2, 1)",
+        "      VariableMultiValueNode($01dfc17d, 4)",
+        "      VariableDivideValueNode($01dfc17d, 3)"
+      ]
+    }
+  ]
+}

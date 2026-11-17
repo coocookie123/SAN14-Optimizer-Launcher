@@ -1,0 +1,8 @@
+{
+  "name": "test_day2",
+  "description": "测试用：势力树每月重选攻打目标的日子从 1 日改到 2 日。看海记录里「攻略目标」事件如果都落在 2 日，就说明游戏读到了改版的树。对 AI 强弱没有影响。",
+  "edits": [
+    {"tree": 0, "node": 4, "type": "VariableCreateNode", "arg": 1, "expect": 1, "value": 2,
+     "why": "势力树 [4] 建的变量是 [5]「日 == 它」里比较的值"}
+  ]
+}

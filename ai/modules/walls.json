@@ -1,0 +1,93 @@
+{
+  "id": "walls",
+  "name": "城下迎击",
+  "description": "第一版（2026-11-12 晚，用户定「城下时放开」）。原版军团树迎击段 [1443]：顶级难度下，对方势力实力超过我方 3 倍、君主野心不到 20 时，这一轮不迎击（$65e78464 = 1）。被围到城下的小势力因此不管城里多少兵、敌军是不是在拆城都不出城（206 年围城时 84% 的评估被它挡掉）。这个模块只在警戒军势的主将已经到它目标据点 3 格内时清掉这个标记，后面原版自己的可动用兵力、战力比较、出兵编成照旧，兵力不够仍然不出。三支（军团 +0x15 的 0/1/2）都改。206 年 A/B 两局：开的一方守的城被攻下 15%（之前三局 36%），出城部队溃灭 3/70、7/75（BEHAVIOR_PLAN 第三十一节）。 2026-11-15 并入「援军继续守」（BEHAVIOR_PLAN 第四十八节，DLL 功能 relief，用户定进默认）：迎击完回城的援军，附近另一座自家城还有敌军攻势以它为目标赶来时，不回城，能打就去打来敌（交战处我方兵力够敌方六成，或来敌已到身边、城边 4 格），打不过就进那座城加强守备；城没威胁了、守满 20 天或兵少就照原版回城。两局冒烟留下 8 次、守的城一座没丢。 2026-11-16 用户定（「行为生效，看起来是真人，结果只要不变的更坏」就可以开，BEHAVIOR_PLAN 第五十节）再并进四个功能，原来的试验模块（experiments/defend、ford、shore、navaldef）只留作 A/B 时按功能名分组用：①守城迎击（DLL 功能 defend，第三版）：没在交战的近战部队 3 格内有交战中的敌方井阑、冲车、投石，而且那里我方兵力不少于它 2 格内的敌军，就去打最近的那支；正要回自己城的近战部队，城 5 格内有交战中的敌军、自己 1500 兵以上、城 6 格内我方兵力至少是这些敌军的六成，就改去打它们，不进城。206 年 A/B 三局：一年只有十几到二十几次机会，没看出好处也没看出坏处（第三十一节）。②渡江迎击（DLL 功能 ford，加 5 处树补丁，原 experiments/ford.json 第一版，去掉了计数探针）：迎击判断里在水面的敌军战力按一半算；敌军本队在水面时清掉「对方实力超过 3 倍不迎击」的标记。兵不够照样不出。③半渡而击（DLL 功能 shore，第五版）：交战中的敌军在水面时，6 格内在陆上的迎击、区域部队去贴着它的岸格（雁行去离它 2 格的岸格），不下水追；它上岸、没了或 12 天后交还原命令。六局合计贴上时我方掉 4712、水上敌军掉 31075，机会每局差别很大（第三十八节）。④水战守港（DLL 功能 navaldef，第 1.1 版）：交战中的敌军在水面靠近我方港口水域时，附近已经出城的部队按游戏的伤害公式比下水打、岸边打、等它上岸三种打法，挑预计交换比最高的；第 1.1 版加了两条：三种都不到 1 的部队不去、照原命令，能去的兵合起来不到那里敌军的一半就都不去（第一版 A/B 六局守方出手 19% → 43%，港照样丢，水上交换 0.69，第四十七节）。四个功能合在一起还没有做过 A/B，只做回归（没有新异常、结果不变差）。",
+  "priority": 10,
+  "dll": [
+    "relief",
+    "defend",
+    "ford",
+    "shore",
+    "navaldef"
+  ],
+  "ops": [
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "find": "IF NOT $65e78464 > 0",
+        "count": 3
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableGetDistanceNode(3, $3894c41c, 5, $006ce4f7, $m.walls.d)",
+        "  IF ALL{$65e78464 > 0, NOT $m.walls.d > 3}",
+        "    VariableCreateNode($65e78464, 0)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "find": "GetHexAroundFightingStrengthNode($9b02d78a, $01dfc17d, $8b8e9250, 10, $935b4fe3, $f65be2fd)",
+        "count": 3
+      },
+      "src": [
+        "MiscLogNode(97, 0, $m.walls.ford_mark)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "find": "LoopListElementNode(2, 2, $f65be2fd, $06dc5c3d)",
+        "count": 3
+      },
+      "src": [
+        "MiscLogNode(96, 0, $m.walls.ford_mark)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "find": "VariableGetCautionTroopsInfoNode($c47f08f2, 1:战力?, $01dfc17d)",
+        "count": 3
+      },
+      "src": [
+        "MiscLogNode(97, 0, $m.walls.ford_mark)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "find": "VariableGetCautionTroopsInfoNode($c47f08f2, 1:战力?, $01dfc17d)",
+        "count": 3
+      },
+      "src": [
+        "MiscLogNode(96, 0, $m.walls.ford_mark)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "find": "IF NOT $65e78464 > 0",
+        "count": 3
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  MiscLogNode(96, 0, $m.walls.ford_mark)",
+        "  VariableCreateNode($m.walls.ford_wet, 0)",
+        "  VariableCreateNode($m.walls.ford_dry, 0)",
+        "  MiscLogNode(97, 0, $m.walls.ford_mark)",
+        "  VariableGetArmyInfoNode($3894c41c, 23, $m.walls.ford_wet)",
+        "  MiscLogNode(96, 0, $m.walls.ford_mark)",
+        "  VariableGetArmyInfoNode($3894c41c, 23, $m.walls.ford_dry)",
+        "  IF ALL{$65e78464 > 0, $m.walls.ford_dry > $m.walls.ford_wet}",
+        "    VariableCreateNode($65e78464, 0)"
+      ]
+    }
+  ]
+}

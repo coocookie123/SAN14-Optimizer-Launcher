@@ -1,0 +1,112 @@
+{
+  "id": "deploy",
+  "name": "出兵编成",
+  "description": "第一版（2026-11-12，只管迎击，军团树第 0 分支 [1613]–[1846]）。原版迎击时，主将按「补够还差的战力」带兵，补够就停，常常一个人带满兵单独出发。本模块：出兵循环开始前数一数候选武将里统率 ≥ 60 的强将，定主力人数 K（最多 3），把主将补够战力需要的兵数分成 K 份（每份不少于 2000）；每个武将出发前，还没派够 K 个且统率 ≥ 60 的，兵数改成一份（不超过他的可带兵数），第 2、3 名主力里第一个会锋矢的用锋矢当侧翼；统率 < 60 的当啦啦队，最多带 2000 兵，会雁行就用雁行（原版按关系重排后，亲爱、义兄弟等会排在主将后面）。出不出兵、打谁、城里留守兵力、兵粮检查和「补够战力就停」都照原版：份额小了，补够战力自然要更多人。 攻城（2026-11-12 加）：按距离梯次集结。原版把本军团里所有够格的己方据点都列为出兵城（$3eef1f81），可用战力累加够了就一次派出，同一目标常有 2–3 个军势从 2–3 座城同一天出发，各走各的。本模块在派兵前，从出兵城里挑离目标最近的一座当集结城，只保留它和离它 6 格以内的据点，可用战力按保留的重新算；不够就这一旬不出，远处城市的兵由原版的往前线运兵（运输）送到集结城，下一旬再看。目标、打不打照原版，只改从哪出、什么时候出。",
+  "priority": 60,
+  "ops": [
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1699,
+        "type": "LoopListElementNode"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableCreateNode($m.deploy.K, 1)",
+        "  VariableCreateNode($m.deploy.strong, 0)",
+        "  VariableCreateNode($m.deploy.flank, 0)",
+        "  LoopListElementNode(2, 1, $5a6af2f3, $m.deploy.p)",
+        "    SEQ(0, 1, 1)",
+        "      VariableGetPersonInfoNode($m.deploy.p, 7, $m.deploy.ptong)",
+        "      IF $m.deploy.ptong >= 60",
+        "        VariablePlusValueNode($m.deploy.strong, 1)",
+        "  SEQ(0, 0, 1)",
+        "    IF $m.deploy.strong >= 3",
+        "      VariableCreateNode($m.deploy.K, 3)",
+        "    IF $m.deploy.strong >= 2",
+        "      VariableCreateNode($m.deploy.K, 2)",
+        "    MiscDummyNode(1)",
+        "  ListGetItemByIndex(4, $5a6af2f3, $d283eb4e, $m.deploy.head)",
+        "  GetBattlePowerSoldierNumNode($m.deploy.head, $01dfc17d, $m.deploy.total)",
+        "  VariableSetVariableSpecifiedTypeNode(14, $m.deploy.share, $m.deploy.total)",
+        "  VariableDivideVariableNode($m.deploy.share, $m.deploy.K)",
+        "  SEQ(0, 0, 1)",
+        "    IF NOT $m.deploy.share >= 2000",
+        "      VariableCreateNode($m.deploy.share, 2000)",
+        "    MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1751,
+        "type": "VariableMinusVariableNode"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    VariableGetPersonInfoNode($7ee148f5, 7, $m.deploy.tong)",
+        "    VariableGetListLengthNode(3, $14246dbb, $m.deploy.sent)",
+        "    VariableGetPersonInfoNode($7ee148f5, 21, $m.deploy.cap)",
+        "    SEQ(0, 0, 1)",
+        "      IF ALL{NOT $m.deploy.sent >= $m.deploy.K, $m.deploy.tong >= 60}",
+        "        SEQ(0, 2, 1)",
+        "          VariableSetVariableSpecifiedTypeNode(14, $608d13b6, $m.deploy.share)",
+        "          VariableMinVariableNode($608d13b6, $m.deploy.cap)",
+        "          SEQ(0, 0, 1)",
+        "            IF ALL{$m.deploy.sent >= 1, NOT $m.deploy.flank >= 1, C131($7ee148f5, 2)}",
+        "              SEQ(0, 2, 1)",
+        "                GetFormationNode(2, $2deb9827)",
+        "                VariableCreateNode($m.deploy.flank, 1)",
+        "            MiscDummyNode(1)",
+        "      IF NOT $m.deploy.tong >= 60",
+        "        SEQ(0, 2, 1)",
+        "          VariableCreateNode($m.deploy.cheer, 2000)",
+        "          VariableMinVariableNode($608d13b6, $m.deploy.cheer)",
+        "          SEQ(0, 0, 1)",
+        "            IF C131($7ee148f5, 3)",
+        "              GetFormationNode(3, $2deb9827)",
+        "            MiscDummyNode(1)",
+        "      MiscDummyNode(1)",
+        "  MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 2052,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    VariableCreateNode($m.deploy.bestd, 999)",
+        "    LoopListElementNode(2, 10, $3eef1f81, $m.deploy.src)",
+        "      SEQ(0, 1, 1)",
+        "        VariableGetDistanceNode(5, $m.deploy.src, 5, $ad8610fe, $m.deploy.ds)",
+        "        IF NOT $m.deploy.ds >= $m.deploy.bestd",
+        "          SEQ(0, 2, 1)",
+        "            VariableSetVariableSpecifiedTypeNode(14, $m.deploy.bestd, $m.deploy.ds)",
+        "            VariableSetVariableSpecifiedTypeNode(5, $m.deploy.stage, $m.deploy.src)",
+        "    IF C22($m.deploy.stage)",
+        "      ListClearNode(5, $m.deploy.keep)",
+        "    VariableCreateNode($3de0871f, 0)",
+        "    LoopListElementNode(2, 10, $3eef1f81, $m.deploy.src)",
+        "      SEQ(0, 1, 1)",
+        "        VariableGetDistanceNode(5, $m.deploy.src, 5, $m.deploy.stage, $m.deploy.dd)",
+        "        IF NOT $m.deploy.dd > 6",
+        "          SEQ(0, 2, 1)",
+        "            ListAddFootholdUniqueNode($m.deploy.src, $m.deploy.keep)",
+        "            GetFootholdFightingStrengthNode($m.deploy.src, $m.deploy.pw, 0, $9f3e3992, 0, 0)",
+        "            VariablePlusVariableNode($3de0871f, $m.deploy.pw)",
+        "    ListClearNode(5, $3eef1f81)",
+        "    LoopListElementNode(2, 10, $m.deploy.keep, $m.deploy.src)",
+        "      ListAddFootholdUniqueNode($m.deploy.src, $3eef1f81)",
+        "  MiscDummyNode(1)"
+      ]
+    }
+  ]
+}

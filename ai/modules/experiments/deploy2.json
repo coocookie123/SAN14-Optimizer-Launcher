@@ -1,0 +1,118 @@
+{
+  "id": "deploy2",
+  "name": "出兵编成第 2.1 版（试验）",
+  "description": "第二版（2026-11-14，试验，用户：「最多 3 人改成 10 人，每份至少 3000，从高到低先填满主力，然后还有兵再填啦啦队；啦啦队最多 2000，也可以 1000、1500，按能出兵数，尽量带更多将领出战」）。只管迎击（军团树第 0 分支 [1613]–[1846]）。① 出兵循环前把候选武将按统率从高到低重排（原版先按可带兵数和统率的综合分、再按和主将的关系排）。② 主力人数 K = 统率 ≥ 60 的人数，最多 10，再不超过「主将补够战力要的兵 ÷ 3000」（至少 1）；每份 = 要的兵 ÷ K，不少于 3000，不超过各人可带兵数；主力里第 2 名起第一个会锋矢的当锋矢侧翼。③ 派满 K 名主力后（或统率 < 60 的），其余都当啦啦队。第 2.1 版（11-14 用户选「小部队只给雁行」）：会雁行的用雁行，城里还能出的兵（兵 − 留守）按还没轮到的人数平均，够 2000 就每人 2000，不够就 1500，再不够 1000（不随机，按配额降，尽量多带人）；不会雁行的近战啦啦队固定 2000，城里还能出的兵或可带兵数不到 2000 就不派这个人（第二版里 1000–1500 兵的近战啦啦队接战后 43% 溃灭，2000 兵的只有 1/14）。④ 原版补够战力就停（之后再派一人去相邻区域涂地）；现在派满主力以后，城里还能出 1000 兵以上、名单还有人时接着派啦啦队。出不出兵、打谁、留守线、兵粮检查照原版。A/B 时和 deploy1e（第一版只给偶数方）一起用：--ab odd:deploy2，换边用 deploy1o 和 --ab even:deploy2。结果（BEHAVIOR_PLAN 42.1，两轮各三个存档）：交换比六个数五个变好、一个持平，但换边后交战后溃灭三局都变多，证据不一致，留在试验里。",
+  "priority": 60,
+  "ops": [
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1699,
+        "type": "LoopListElementNode"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  LoopListElementNode(2, 1, $5a6af2f3, $m.deploy2.p)",
+        "    SEQ(0, 1, 1)",
+        "      VariableGetPersonInfoNode($m.deploy2.p, 7, $m.deploy2.ptong)",
+        "      MiscSetPersonEvaluationNode($m.deploy2.p, $m.deploy2.ptong)",
+        "  ListSortEvaluationNode(4, $5a6af2f3, 1)",
+        "  VariableCreateNode($m.deploy2.strong, 0)",
+        "  VariableCreateNode($m.deploy2.flank, 0)",
+        "  VariableCreateNode($m.deploy2.idx, 0)",
+        "  VariableGetListLengthNode(4, $5a6af2f3, $m.deploy2.len)",
+        "  LoopListElementNode(2, 1, $5a6af2f3, $m.deploy2.p)",
+        "    SEQ(0, 1, 1)",
+        "      VariableGetPersonInfoNode($m.deploy2.p, 7, $m.deploy2.ptong)",
+        "      IF $m.deploy2.ptong >= 60",
+        "        VariablePlusValueNode($m.deploy2.strong, 1)",
+        "  VariableSetVariableSpecifiedTypeNode(14, $m.deploy2.K, $m.deploy2.strong)",
+        "  VariableMinValueNode($m.deploy2.K, 10)",
+        "  ListGetItemByIndex(4, $5a6af2f3, $d283eb4e, $m.deploy2.head)",
+        "  GetBattlePowerSoldierNumNode($m.deploy2.head, $01dfc17d, $m.deploy2.total)",
+        "  VariableSetVariableSpecifiedTypeNode(14, $m.deploy2.kt, $m.deploy2.total)",
+        "  VariableDivideValueNode($m.deploy2.kt, 3000)",
+        "  VariableMinVariableNode($m.deploy2.K, $m.deploy2.kt)",
+        "  VariableMaxValueNode($m.deploy2.K, 1)",
+        "  VariableSetVariableSpecifiedTypeNode(14, $m.deploy2.share, $m.deploy2.total)",
+        "  VariableDivideVariableNode($m.deploy2.share, $m.deploy2.K)",
+        "  VariableMaxValueNode($m.deploy2.share, 3000)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 1,
+        "index": 1751,
+        "type": "VariableMinusVariableNode"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariablePlusValueNode($m.deploy2.idx, 1)",
+        "  VariableGetPersonInfoNode($7ee148f5, 7, $m.deploy2.tong)",
+        "  VariableGetListLengthNode(3, $14246dbb, $m.deploy2.sent)",
+        "  VariableGetPersonInfoNode($7ee148f5, 21, $m.deploy2.cap)",
+        "  SEQ(0, 0, 1)",
+        "    IF ALL{NOT $m.deploy2.sent >= $m.deploy2.K, $m.deploy2.tong >= 60}",
+        "      SEQ(0, 2, 1)",
+        "        VariableSetVariableSpecifiedTypeNode(14, $608d13b6, $m.deploy2.share)",
+        "        VariableMinVariableNode($608d13b6, $m.deploy2.cap)",
+        "        SEQ(0, 0, 1)",
+        "          IF ALL{$m.deploy2.sent >= 1, NOT $m.deploy2.flank >= 1, C131($7ee148f5, 2)}",
+        "            SEQ(0, 2, 1)",
+        "              GetFormationNode(2, $2deb9827)",
+        "              VariableCreateNode($m.deploy2.flank, 1)",
+        "          MiscDummyNode(1)",
+        "    SEQ(0, 2, 1)",
+        "      VariableSetVariableSpecifiedTypeNode(14, $m.deploy2.R, $1d33a96b)",
+        "      VariableMinusVariableNode($m.deploy2.R, $4889042f)",
+        "      VariableSetVariableSpecifiedTypeNode(14, $m.deploy2.C, $m.deploy2.len)",
+        "      VariableMinusVariableNode($m.deploy2.C, $m.deploy2.idx)",
+        "      VariablePlusValueNode($m.deploy2.C, 1)",
+        "      VariableMaxValueNode($m.deploy2.C, 1)",
+        "      VariableSetVariableSpecifiedTypeNode(14, $m.deploy2.per, $m.deploy2.R)",
+        "      VariableDivideVariableNode($m.deploy2.per, $m.deploy2.C)",
+        "      SEQ(0, 0, 1)",
+        "        IF C131($7ee148f5, 3)",
+        "          SEQ(0, 2, 1)",
+        "            SEQ(0, 0, 1)",
+        "              IF $m.deploy2.per >= 2000",
+        "                VariableCreateNode($m.deploy2.cs, 2000)",
+        "              IF $m.deploy2.per >= 1500",
+        "                VariableCreateNode($m.deploy2.cs, 1500)",
+        "              VariableCreateNode($m.deploy2.cs, 1000)",
+        "            VariableSetVariableSpecifiedTypeNode(14, $608d13b6, $m.deploy2.cs)",
+        "            VariableMinVariableNode($608d13b6, $m.deploy2.cap)",
+        "            VariableMinVariableNode($608d13b6, $m.deploy2.R)",
+        "            GetFormationNode(3, $2deb9827)",
+        "        SEQ(0, 2, 1)",
+        "          VariableCreateNode($608d13b6, 2000)",
+        "          VariableMinVariableNode($608d13b6, $m.deploy2.cap)",
+        "          VariableMinVariableNode($608d13b6, $m.deploy2.R)",
+        "          SEQ(0, 0, 1)",
+        "            IF NOT $608d13b6 >= 2000",
+        "              VariableCreateNode($608d13b6, 0)",
+        "            MiscDummyNode(1)"
+      ]
+    },
+    {
+      "op": "after",
+      "at": {
+        "tree": 1,
+        "index": 1794,
+        "type": "VariableMinusVariableNode"
+      },
+      "src": [
+        "SEQ(0, 2, 1)",
+        "  VariableGetListLengthNode(3, $14246dbb, $m.deploy2.sent2)",
+        "  VariableGetFootholdInfoNode($659cc10d, 36, $m.deploy2.left)",
+        "  VariableMinusVariableNode($m.deploy2.left, $4889042f)",
+        "  SEQ(0, 0, 1)",
+        "    IF ALL{NOT $01dfc17d > 0, $m.deploy2.sent2 >= $m.deploy2.K, $m.deploy2.left >= 1000, $m.deploy2.len > $m.deploy2.idx}",
+        "      VariableCreateNode($01dfc17d, 1)",
+        "    MiscDummyNode(1)"
+      ]
+    }
+  ]
+}

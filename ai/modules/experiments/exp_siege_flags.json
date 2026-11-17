@@ -1,0 +1,13 @@
+{
+  "id": "exp_siege_flags",
+  "name": "实验：攻城规划开关全开",
+  "description": "对照实验，不是正式模块。军势树攻城分支里，AttackFootholdRelayAreaAttackNode 有三个开关参数（第 3、4、5 个）。原版只有任务 10 三个全开，任务 9、22 开后两个，任务 8 全关；读 exe 看到开关存进节点状态 +0x1c、+0x1d、+0x1e，控制攻城途中的几种行为，其中一个和离目标 10 格以内有关，具体作用没读懂。本实验让任务 8、9、22 也三个全开，和原版对照，看攻城部队到达是否更整齐、攻城结果如何。$0454142a 是攻城分支开头设成 1 的变量。",
+  "priority": 30,
+  "ops": [
+    {"op": "set_arg", "at": {"tree": 2, "index": 17, "type": "AttackFootholdRelayAreaAttackNode"}, "arg": 2, "expect": 0, "value": 72619050},
+    {"op": "set_arg", "at": {"tree": 2, "index": 17, "type": "AttackFootholdRelayAreaAttackNode"}, "arg": 3, "expect": 0, "value": 72619050},
+    {"op": "set_arg", "at": {"tree": 2, "index": 17, "type": "AttackFootholdRelayAreaAttackNode"}, "arg": 4, "expect": 0, "value": 72619050},
+    {"op": "set_arg", "at": {"tree": 2, "index": 21, "type": "AttackFootholdRelayAreaAttackNode"}, "arg": 2, "expect": 0, "value": 72619050},
+    {"op": "set_arg", "at": {"tree": 2, "index": 29, "type": "AttackFootholdRelayAreaAttackNode"}, "arg": 2, "expect": 0, "value": 72619050}
+  ]
+}

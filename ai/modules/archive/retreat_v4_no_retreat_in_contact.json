@@ -1,0 +1,101 @@
+{
+  "id": "retreat",
+  "name": "野战撤退",
+  "description": "第四版（2026-11-12）：撤退只在接战前决定，军势里已有部队贴着敌军就不再触发撤退。日志：贴着敌军时下撤退令的部队第二天 82–88% 仍贴着（走不开），交换比 0.2–0.6；206 年 A/B 里开模块一方这种日子一年 101–102 天、掉兵约 3 万，原版只有 26–28 天。试过让贴敌的撤退部队先打再撤（DLL），贴身日子拖到 156 天、对原版溃灭 39%，更差，已撤掉。以下是第三版原说明。原版只在区域攻击时比较敌我战力决定撤退。本模块把这条推广到迎击（任务 1；第二版去掉了任务 12，它其实是运输）：本队 8 格内敌方战力超过我方 5 格内战力的 1.3 倍时，整个军势改成撤退，目的地是本队的出发据点。攻城（任务 2、8、9、10、22）不撤（用户决定）。另外，撤退中的军势（任务 0、两支以上部队）在本队 2 格内没有敌军时，所有部队都以同一个据点（军势目标）为目标，一起回同一座城，不各自回城；本队被缠住或已不在时照原版。 第三版（2026-11-12）：部队树里补一段。军势任务是 0、部队还没在撤时，当场下撤退令（ArmySetRetreatNode），两支以上时也指向同一座城。原因：军团树把任务改成 0 时，军势树常卡在迎击执行节点上「进行中」，原版下撤退令的那段跑不到，部队留在原地待命（第三版测试里一起撤时目标一致只有 79%）。",
+  "priority": 55,
+  "ops": [
+    {
+      "op": "insert",
+      "at": {
+        "tree": 1,
+        "find": "re:^LoopListElementNode\\(0, 3, 0, \\$88dbc001\\)$",
+        "within": "LINK($b4d3d84b)"
+      },
+      "pos": "last",
+      "src": [
+        "IF C28($88dbc001, 1)",
+        "  SEQ(0, 1, 1)",
+        "    VariableGetTroopsInfoNode($88dbc001, 2, $m.retreat.lead)",
+        "    IF C22($m.retreat.lead)",
+        "      GetArroundEnemyListNode($m.retreat.lead, 8, $m.retreat.foes)",
+        "    VariableGetListLengthNode(3, $m.retreat.foes, $m.retreat.n)",
+        "    IF $m.retreat.n > 0",
+        "      VariableGetArmyInfoNode($m.retreat.lead, 6, $m.retreat.hex)",
+        "    VariableGetTroopsInfoNode($88dbc001, 3, $m.retreat.alist)",
+        "    VariableCreateNode($m.retreat.engaged, 0)",
+        "    LoopListElementNode(2, 2, $m.retreat.alist, $m.retreat.a)",
+        "      SEQ(0, 2, 1)",
+        "        GetArroundEnemyListNode($m.retreat.a, 1, $m.retreat.adj)",
+        "        VariableGetListLengthNode(3, $m.retreat.adj, $m.retreat.nadj)",
+        "        SEQ(0, 0, 1)",
+        "          IF $m.retreat.nadj > 0",
+        "            VariableCreateNode($m.retreat.engaged, 1)",
+        "          MiscDummyNode(1)",
+        "    IF NOT $m.retreat.engaged > 0",
+        "      MiscDummyNode(1)",
+        "    VariableGetArmyInfoNode($m.retreat.lead, 5, $m.retreat.force)",
+        "    VariableCreateNode($m.retreat.zero, 0)",
+        "    ListGetItemByIndex(3, $m.retreat.foes, $m.retreat.zero, $m.retreat.foe)",
+        "    VariableGetArmyInfoNode($m.retreat.foe, 5, $m.retreat.efforce)",
+        "    GetHexAroundFightingStrengthNode($m.retreat.hex, $m.retreat.ours, $m.retreat.tmp, 5, $m.retreat.force, $m.retreat.tmplist)",
+        "    GetHexAroundFightingStrengthNode($m.retreat.hex, $m.retreat.theirs, $m.retreat.tmp, 8, $m.retreat.efforce, $m.retreat.tmplist)",
+        "    VariableMultiValueNode($m.retreat.ours, 13)",
+        "    VariableDivideValueNode($m.retreat.ours, 10)",
+        "    IF $m.retreat.theirs > $m.retreat.ours",
+        "      SEQ(0, 1, 1)",
+        "        VariableGetArmyInfoNode($m.retreat.lead, 4, $m.retreat.home)",
+        "        SpecifiedTroopsSetPurposeNode($88dbc001, 0, $m.retreat.home)"
+      ]
+    },
+    {
+      "op": "insert",
+      "at": {
+        "tree": 2,
+        "index": 1,
+        "type": "SEQ"
+      },
+      "pos": "last",
+      "src": [
+        "IF C28($88dbc001, 0)",
+        "  SEQ(0, 1, 1)",
+        "    VariableGetTroopsInfoNode($88dbc001, 2, $m.retreat.lead2)",
+        "    VariableGetTroopsInfoNode($88dbc001, 3, $m.retreat.list)",
+        "    VariableGetListLengthNode(3, $m.retreat.list, $m.retreat.cnt)",
+        "    IF $m.retreat.cnt >= 2",
+        "      VariableGetTroopsInfoNode($88dbc001, 4, $m.retreat.dest)",
+        "    IF ALL{C22($m.retreat.dest), C22($m.retreat.lead2)}",
+        "      GetArroundEnemyListNode($m.retreat.lead2, 2, $m.retreat.close)",
+        "    VariableGetListLengthNode(3, $m.retreat.close, $m.retreat.nclose)",
+        "    IF NOT $m.retreat.nclose > 0",
+        "      LoopListElementNode(2, 2, $m.retreat.list, $m.retreat.army)",
+        "        ArmySetTargetArmyNode($m.retreat.army, $m.retreat.dest)"
+      ]
+    },
+    {
+      "op": "before",
+      "at": {
+        "tree": 3,
+        "index": 7,
+        "type": "SEQ"
+      },
+      "src": [
+        "SEQ(0, 0, 1)",
+        "  SEQ(0, 1, 1)",
+        "    VariableGetArmyInfoNode($06dc5c3d, 3, $m.retreat.troops3)",
+        "    IF C28($m.retreat.troops3, 0)",
+        "      ArmySetRetreatNode($06dc5c3d)",
+        "    VariableGetTroopsInfoNode($m.retreat.troops3, 2, $m.retreat.lead3)",
+        "    VariableGetTroopsInfoNode($m.retreat.troops3, 3, $m.retreat.list3)",
+        "    VariableGetListLengthNode(3, $m.retreat.list3, $m.retreat.cnt3)",
+        "    IF $m.retreat.cnt3 >= 2",
+        "      VariableGetTroopsInfoNode($m.retreat.troops3, 4, $m.retreat.dest3)",
+        "    IF ALL{C22($m.retreat.dest3), C22($m.retreat.lead3)}",
+        "      GetArroundEnemyListNode($m.retreat.lead3, 2, $m.retreat.close3)",
+        "    VariableGetListLengthNode(3, $m.retreat.close3, $m.retreat.nclose3)",
+        "    IF NOT $m.retreat.nclose3 > 0",
+        "      ArmySetTargetArmyNode($06dc5c3d, $m.retreat.dest3)",
+        "  MiscDummyNode(1)"
+      ]
+    }
+  ]
+}
